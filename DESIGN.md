@@ -182,8 +182,6 @@ We will have a grid Module which contains a struct of ‘spots’
 	spot_iterate() - iterates through spot
 	
 	
-	
-
 
 
 Client
@@ -193,18 +191,5 @@ player_loadmap() - loads the map onto the client for the player
 player_delete() - deletes a player
 player_move - handles input to move the player around the map
 
-
-
-XYZ module
-
-> Repeat this section for each module that is included in either the client or server.
-
-
-Client
-
-
-
-
-Server
 
 
