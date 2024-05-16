@@ -17,6 +17,7 @@ void person_setPos(person_t* person, int new_pos);
 
 int person_getPos(person_t* person);
 void person_delete(person_t* person);
+void person_setName(person_t* person, char c);
 
 
 

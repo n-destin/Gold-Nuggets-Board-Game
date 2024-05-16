@@ -23,6 +23,10 @@ int person_getGold(person_t* person){
     return person->gold;
 }
 
+void person_setName(person_t* person, char c){
+    person->name = c;
+}
+
 char person_getName(person_t* person){
     return person->name;
 }

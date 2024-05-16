@@ -94,7 +94,6 @@ void map_load(map_t* map, FILE* in){
 }
 
 void map_print(map_t* map, FILE* out){
-    
     for(int row = 0; row < map->rows; row++){
         for(int column = 0; column < map->columns; column++){
             if(map->grid[column + (row*map->columns)] == NULL){
@@ -106,7 +105,12 @@ void map_print(map_t* map, FILE* out){
                 fprintf(out, "%c", person_getName(person));
             }else{
                 spot_t* spot = map->grid[column + (row*map->columns)];
-                fprintf(out, "%c", spot_item(spot));
+                if(get_visibility(spot)){
+                    fprintf(out, "%c", spot_item(spot));
+                }
+                else{
+                    fprintf(out, "%c", ' ');
+                }
             }
         }
         fprintf(out, "%c", '\n');
@@ -157,8 +161,9 @@ bool move_person(map_t* map, person_t* person, char direction){
         new_pos = current_pos + 1;
     }
     if(map->players[new_pos] != NULL){
-        map->players[current_pos] = map->players[new_pos];
-        map->players[new_pos] = person; 
+        char temp_name = person_getName(person);
+        person_setName(person, person_getName(map->players[new_pos]));
+        person_setName(map->players[new_pos], temp_name);
     }
     else if(spot_item(map->grid[new_pos]) == '.' || spot_item(map->grid[new_pos]) == '#' || spot_item(map->grid[new_pos]) == '*'){
         person_setPos(person, new_pos);
@@ -183,7 +188,8 @@ person_t* insert_person(map_t* map, char c){
             char key[20];
             sprintf(key, "%d", num_spaces);
             
-            int* value = malloc(sizeof(int)); 
+            int* value = malloc(sizeof(int));
+            
             if (value != NULL) { 
                 *value = i;
                 set_insert(indexes, key, value); 
@@ -199,7 +205,7 @@ person_t* insert_person(map_t* map, char c){
     }
     
     srand(time(NULL));
-    int random_number = rand() % (num_spaces+1);
+    int random_number = rand() % (num_spaces);
     char random_string[20];
     sprintf(random_string, "%d", random_number);
     int* temp = set_find(indexes, random_string);

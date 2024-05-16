@@ -29,10 +29,10 @@ maptest.o:
 person.o: person.h
 
 test: maptest
-	./maptest ../maps/challenge.txt
+	./maptest ../maps/small.txt
 
 valgrind: maptest
-	$(VALGRIND) ./maptest ../maps/challenge.txt
+	$(VALGRIND) ./maptest ../maps/small.txt
 
 
 .PHONY: test valgrind clean
