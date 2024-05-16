@@ -5,7 +5,7 @@
 #include "spot.h"
 #include "person.h"
 
-typedef struct spot{
+typedef struct spot{ //Contains item, person, and a visibility
     char item;
     char person;
     bool visible;
@@ -13,7 +13,7 @@ typedef struct spot{
 
 spot_t* spot_new(){
     spot_t* spot = malloc(sizeof(spot_t));
-    if (spot == NULL) {
+    if (spot == NULL) { //Checks for memory allocation
         fprintf(stderr, "Memory allocation error");
         exit(1);          
     } 
@@ -22,7 +22,7 @@ spot_t* spot_new(){
 }
 
 bool spot_insert(spot_t* spot, char c){
-    if(spot == NULL){
+    if(spot == NULL){ //Makes sure possible psot
         return false;
     }
     spot->item = c;

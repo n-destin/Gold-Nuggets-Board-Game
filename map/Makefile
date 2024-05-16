@@ -3,7 +3,7 @@
 # David Kotz, April 2016, 2017, 2019, 2021
 # updated by Xia Zhou, July 2016, 2018, January 2019
 
-L = ../../tse-Mr-Axinn/libcs50
+L = ../libcs50
 
 
 OBJS = map.o spot.o maptest.o person.o

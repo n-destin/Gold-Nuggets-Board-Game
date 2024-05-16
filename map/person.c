@@ -1,9 +1,10 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
+#include <stdio.h>
 
 
-typedef struct person{
+typedef struct person{ //Person has a name, position, and a quantity of gold
     char name;
     int pos;
     int gold;
@@ -11,7 +12,12 @@ typedef struct person{
 
 person_t* person_new(char c){
     person_t* person = malloc(sizeof(person_t));
+    if (person == NULL) { //Checks for memory allocation
+        fprintf(stderr, "Memory allocation error");
+        exit(1);          
+    } 
     person->name = c;
+    person->gold = 0;
     return person;
 }
 
