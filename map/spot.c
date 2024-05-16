@@ -25,10 +25,6 @@ bool spot_insert(spot_t* spot, char c){
     if(spot == NULL){
         return false;
     }
-    else if(hashtable_find(available_characters, &c) != NULL){
-        fprintf(stderr, "Character %c not found", c);
-        exit(1);
-    }
     spot->item = c;
     return true;
 }

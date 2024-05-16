@@ -1,8 +1,10 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <string.h>
+#include <time.h>
 #include "../../tse-Mr-Axinn/libcs50/file.h"
 #include "../../tse-Mr-Axinn/libcs50/hashtable.h"
+#include "../../tse-Mr-Axinn/libcs50/set.h"
 #include "spot.h"
 #include "map.h"
 
@@ -100,7 +102,6 @@ void map_print(map_t* map, FILE* out){
         }
         fprintf(out, "%c", '\n');
     }
-    fclose(out);
 }
 
 void map_delete(map_t* map){
@@ -121,6 +122,44 @@ void set_characters(){
         char* key = &characters[i];
         hashtable_insert(possible_characters, key, "");
     }
+}
+
+bool insert_person(map_t* map, char c){
+    set_t* indexes = set_new();
+    int num_spaces = 0;
+    int final_index = 0;
+    for(int i = 0; i < (map->columns*map->rows); i++){
+        if(spot_item(map->grid[i]) == '.'){
+            char key[20];
+            sprintf(key, "%d", num_spaces);
+            //printf("index: %s ", index);
+            int* tem = malloc(sizeof(int)); // Allocate memory for an integer
+            if (tem != NULL) { // Check if malloc was successful
+                *tem = i; // Assign the value of i to the memory location pointed to by tem
+                set_insert(indexes, key, tem); // Insert tem into the set
+            } else {
+                fprintf(stderr, "Memory failure");
+            }
+            set_insert(indexes, key, tem);
+            num_spaces++;
+        }
+    }
+    if(num_spaces == 0){
+        return false;
+    }
+    
+    srand(time(NULL));
+    int random_number = rand() % (num_spaces+1);
+    char random_string[20];
+    int* temp = set_find(indexes, random_string);
+    
+    final_index = *temp;
+    
+    spot_t* person = spot_new(possible_characters);
+    spot_insert(person, c);
+    map->grid[final_index] = person;
+    set_delete(indexes, namedelete);
+    return true;
 }
 
 void namedelete(void* item)

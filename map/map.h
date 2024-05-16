@@ -13,3 +13,4 @@ void map_print(map_t* map, FILE* out);
 void map_delete(map_t* map);
 void set_characters();
 void namedelete(void* item);
+bool insert_person(map_t* map, char c);
