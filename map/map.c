@@ -49,9 +49,6 @@ void map_validate(map_t* map, FILE* in){
         numRows++; 
         free(line);
     }
-    if(numColumns < 3 || numRows < 3){ 
-        fprintf(stderr, "Map doesn't have correct amount of rows/colums");
-    }
     map->grid = calloc((numColumns*numRows), sizeof(spot_t*)); //Create memory for grid
     map->players = calloc((numColumns*numRows), sizeof(person_t*)); //Create memory for players
     for (int i = 0; i < (map->rows*map->columns); i++) { //Going through array and setting value to NULL
