@@ -10,7 +10,7 @@ int main(const int argc, char* argv[]) {
         char* map_path = argv[1];
         map_t* map = map_new(map_path);
         map_print(map, stdout);
-        //map_delete(map);
+        map_delete(map);
     }
     else {
         fprintf(stderr, "Usage: ./maptest map.txt\n");

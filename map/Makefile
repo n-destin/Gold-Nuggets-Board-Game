@@ -27,6 +27,12 @@ map.o: map.h spot.h
 spot.o: spot.h
 maptest.o:
 
+test: maptest
+	./maptest ../maps/challenge.txt
+
+valgrind: maptest
+	$(VALGRIND) ./maptest ../maps/challenge.txt
+
 
 .PHONY: test valgrind clean
 

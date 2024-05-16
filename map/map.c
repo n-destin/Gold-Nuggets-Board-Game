@@ -29,42 +29,36 @@ map_t* map_new(char* path){
     fprintf(stderr, "Found file %s\n", path);
     map_validate(map, in);
     fclose(in);  
-    //in = fopen(path, "r"); 
-    FILE *in2 = NULL;
-    in2 = fopen(path, "r");
-    map_load(map, in2);
+    in = fopen(path, "r");
+    map_load(map, in);
+    fclose(in);
     return map;
-    //fclose(in);  
 }
 
 void map_validate(map_t* map, FILE* in){
     char* line = NULL;
     int numRows = 0;
     int numColumns = 0;
-    //printf("here434\n");
     while((line = file_readLine(in)) != NULL){ 
-        //printf("here\n");
         int line_size = (int)strlen(line);
         if(line_size > numColumns){
             numColumns = line_size;
         }
         numRows++; 
+        free(line);
     }
     if(numColumns < 3 || numRows < 3){
         fprintf(stderr, "Map doesn't have correct amount of rows/colums");
     }
-    printf("%d", numColumns);
     map->grid = malloc((numColumns*numRows) * sizeof(spot_t*));
     map->columns = numColumns;
     map->rows = numRows;
-    //printf("here23");
-    //free(line);
+    free(line);
 }
 
 void map_load(map_t* map, FILE* in){
     char c;
     int map_size = (map->rows * map->columns);
-    //map->grid = malloc(map_size * sizeof(spot_t*));
     if (map->grid == NULL) {
         fprintf(stderr, "Memory allocation failure");
         free(map);
@@ -76,28 +70,25 @@ void map_load(map_t* map, FILE* in){
     
     char* line = NULL;
     int current_row = 0; 
-    printf("Rows: %d, Columns %d\n", map->rows, map->columns);
     while((line = file_readLine(in)) != NULL){ 
         int i = 0;
         while ((c = line[i]) != '\0') {
             spot_t* spot = spot_new(possible_characters);
             c = line[i];
-            //fprintf(stdout, "%c", c);
             if(!spot_insert(spot, c)){
                 fprintf(stderr, "Error inserting item %c", c);
                 exit(1);
             }
-            map->grid[i+(current_row*map->columns)] = spot; //Might be an issue
+            map->grid[i+(current_row*map->columns)] = spot; 
             i++;
         }
-        //printf("\n");
         current_row++;
+        free(line);
     }
     free(line);
 }
 
 void map_print(map_t* map, FILE* out){
-    printf("here\n");
     for(int row = 0; row < map->rows; row++){
         for(int column = 0; column < map->columns; column++){
             if(map->grid[column + (row*map->columns)] == NULL){
@@ -106,8 +97,6 @@ void map_print(map_t* map, FILE* out){
             }
             spot_t* spot = map->grid[column + (row*map->columns)];
             fprintf(out, "%c", spot_item(spot));
-            //fflush(out);
-            //printf("here1212");
         }
         fprintf(out, "%c", '\n');
     }
