@@ -34,3 +34,7 @@ void person_setPos(person_t* person, int new_pos){
 int person_getPos(person_t* person){
     return person->pos;
 }
+
+void person_delete(person_t* person){
+    free(person);
+}

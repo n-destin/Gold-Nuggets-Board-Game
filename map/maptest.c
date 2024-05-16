@@ -3,20 +3,22 @@
 #include <string.h>
 #include "spot.h"
 #include "map.h"
-
+#include "person.h"
 
 int main(const int argc, char* argv[]) {
     if (argc == 2) {  
         char* map_path = argv[1];
         map_t* map = map_new(map_path);
-        printf("here\n");
         map_print(map, stdout);
-        printf("here\n");
-        insert_person(map, 'a');
-        insert_person(map, 'b');
-        insert_person(map, 'c');
-        printf("here\n");
+        person_t* a = insert_person(map, 'a');
+        person_t* b = insert_person(map, 'b');
+        person_t* c = insert_person(map, 'c');
         map_print(map, stdout);
+        move_person(map, a, 'a');
+        move_person(map, b, 'd');
+        move_person(map, c, 'a');
+        map_print(map, stdout);
+
         map_delete(map);
     }
     else {

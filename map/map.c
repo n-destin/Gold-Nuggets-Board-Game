@@ -16,10 +16,8 @@ typedef struct map{
     person_t** players; 
 } map_t;
 
-int PLAYERS_MAX = 26;
-
 map_t* map_new(char* path){
-    map_t* map = malloc(sizeof(map_t));
+    map_t* map = calloc(1, sizeof(map_t));
     if(map == NULL){
         fprintf(stderr, "Memory allocation failure");
         exit(1);
@@ -54,8 +52,8 @@ void map_validate(map_t* map, FILE* in){
     if(numColumns < 3 || numRows < 3){
         fprintf(stderr, "Map doesn't have correct amount of rows/colums");
     }
-    map->grid = malloc((numColumns*numRows) * sizeof(spot_t*));
-    map->players = malloc((numColumns*numRows) * sizeof(person_t*));
+    map->grid = calloc((numColumns*numRows), sizeof(spot_t*));
+    map->players = calloc((numColumns*numRows), sizeof(person_t*));
     for (int i = 0; i < (map->rows*map->columns); i++) {
         map->players[i] = NULL;
     }
@@ -120,13 +118,63 @@ void map_delete(map_t* map){
         if(map->grid[i] != NULL){
             spot_delete(map->grid[i]);
         }
+        if(map->players[i] != NULL){
+            person_delete(map->players[i]);
+        }
     }
     free(map->grid);
+    free(map->players);
     free(map);
 }
 
+bool move_person(map_t* map, person_t* person, char direction){
+    int current_pos = person_getPos(person);
+    int row = (int) (current_pos / map->columns);
+    int column = current_pos - (row*map->columns);
+    int new_pos = 0;
+    if(direction == 'w'){
+        if(row == 0){
+            return false;
+        }
+        new_pos = current_pos - map->columns;
+    }
+    else if(direction == 'a'){
+        if(column == 0){
+            return false;
+        }
+        new_pos = current_pos - 1;
+    }
+    else if(direction == 's'){
+        if(row == map->rows){ 
+            return false;
+        }
+        new_pos = current_pos + map->columns;
+    }
+    else if(direction == 'd'){
+        if(column == map->columns){ 
+            return false;
+        }
+        new_pos = current_pos + 1;
+    }
+    if(map->players[new_pos] != NULL){
+        map->players[current_pos] = map->players[new_pos];
+        map->players[new_pos] = person; 
+    }
+    else if(spot_item(map->grid[new_pos]) == '.' || spot_item(map->grid[new_pos]) == '#' || spot_item(map->grid[new_pos]) == '*'){
+        person_setPos(person, new_pos);
+        map->players[current_pos] = NULL; 
+        map->players[new_pos] = person;
+        if(spot_item(map->grid[new_pos]) == '*'){
+            person_addGold(person);
+        }
+    }
+    else{
+        return false;
+    }
+    return true;
+}
 
-bool insert_person(map_t* map, char c){
+person_t* insert_person(map_t* map, char c){
     set_t* indexes = set_new();
     int num_spaces = 0;
     int final_index = 0;
@@ -135,10 +183,10 @@ bool insert_person(map_t* map, char c){
             char key[20];
             sprintf(key, "%d", num_spaces);
             
-            int* value = malloc(sizeof(int)); // Allocate memory for an integer
-            if (value != NULL) { // Check if malloc was successful
-                *value = i; // Assign the value of i to the memory location pointed to by tem
-                set_insert(indexes, key, value); // Insert tem into the set
+            int* value = malloc(sizeof(int)); 
+            if (value != NULL) { 
+                *value = i;
+                set_insert(indexes, key, value); 
             } else {
                 fprintf(stderr, "Memory failure");
             }
@@ -147,7 +195,7 @@ bool insert_person(map_t* map, char c){
         }
     }
     if(num_spaces == 0){
-        return false;
+        return NULL;
     }
     
     srand(time(NULL));
@@ -161,8 +209,7 @@ bool insert_person(map_t* map, char c){
     person_setPos(person, final_index);
     map->players[final_index] = person;
     set_delete(indexes, namedelete);
-
-    return true;
+    return person;
 }
 
 void namedelete(void* item)

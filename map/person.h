@@ -2,6 +2,7 @@
 #include <stdbool.h>
 #include <string.h>
 
+
 typedef struct person person_t;
 
 person_t* person_new(char c);
@@ -15,5 +16,7 @@ char person_getName(person_t* person);
 void person_setPos(person_t* person, int new_pos);
 
 int person_getPos(person_t* person);
+void person_delete(person_t* person);
+
 
 
