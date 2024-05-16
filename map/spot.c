@@ -2,17 +2,16 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
-#include "../../tse-Mr-Axinn/libcs50/hashtable.h"
 #include "spot.h"
+#include "person.h"
 
 typedef struct spot{
     char item;
+    char person;
 } spot_t;
 
-hashtable_t* available_characters; 
 
-spot_t* spot_new(hashtable_t* possible_characters){
-    available_characters = possible_characters;
+spot_t* spot_new(){
     spot_t* spot = malloc(sizeof(spot_t));
     if (spot == NULL) {
         fprintf(stderr, "Memory allocation error");

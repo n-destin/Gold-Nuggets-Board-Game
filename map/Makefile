@@ -6,7 +6,7 @@
 L = ../../tse-Mr-Axinn/libcs50
 
 
-OBJS = map.o spot.o maptest.o
+OBJS = map.o spot.o maptest.o person.o
 LLIBS = $L/libcs50-given.a
 LIBS = -lm
 
@@ -23,9 +23,10 @@ VALGRIND = valgrind --leak-check=full --show-leak-kinds=all
 maptest: $(OBJS) $(LLIBS)
 	$(CC) $(CFLAGS) $(OBJS) $(LLIBS) $(LIBS) -o $@
 
-map.o: map.h spot.h
+map.o: map.h spot.h person.h
 spot.o: spot.h
 maptest.o:
+person.o: person.h
 
 test: maptest
 	./maptest ../maps/challenge.txt
