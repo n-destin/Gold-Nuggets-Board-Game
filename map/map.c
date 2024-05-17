@@ -129,30 +129,55 @@ bool move_person(map_t* map, person_t* person, char direction){
     int row = (int) (current_pos / map->columns); //Find current row
     int column = current_pos - (row*map->columns); //Find current column
     int new_pos = 0;
-    if(direction == 'w'){ //Up
+    if(direction == 'k'){ //Up
         if(row == 0){
             return false;
         }
         new_pos = current_pos - map->columns; 
     }
-    else if(direction == 'a'){ //Left
+    else if(direction == 'h'){ //Left
         if(column == 0){
             return false;
         }
         new_pos = current_pos - 1;
     }
-    else if(direction == 's'){ //Down
+    else if(direction == 'j'){ //Down
         if(row == map->rows){ 
             return false;
         }
         new_pos = current_pos + map->columns;
     }
-    else if(direction == 'd'){ //Right
+    else if(direction == 'l'){ //Right
         if(column == map->columns){ 
             return false;
         }
         new_pos = current_pos + 1;
     }
+    else if(direction == 'y'){ //Up left
+        if(column == 0 || row == 0){
+            return false;
+        }
+        new_pos = current_pos - map->columns - 1;
+    }
+    else if(direction == 'u'){ //Up right
+        if(column == map->columns || row == 0){ 
+            return false;
+        }
+        new_pos = current_pos - map->columns + 1;
+    }
+    else if(direction == 'b'){ //Down left
+        if(column == 0 || row == map->rows){ 
+            return false;
+        }
+        new_pos = current_pos + map->columns - 1;
+    }
+    else if(direction == 'n'){ //Down right
+        if(column == map->columns || row == map->rows){ 
+            return false;
+        }
+        new_pos = current_pos + map->columns + 1;
+    }
+
     if(map->players[new_pos] != NULL){ //If there is a player in the way
         char temp_name = person_getName(person); //Create temp
         person_setName(person, person_getName(map->players[new_pos])); //Swap positions
