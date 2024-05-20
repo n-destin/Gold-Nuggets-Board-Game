@@ -9,6 +9,7 @@ typedef struct spot{ //Contains item, person, and a visibility
     char item;
     char person;
     bool visible;
+    int gold;
 } spot_t;
 
 spot_t* spot_new(){
@@ -17,6 +18,7 @@ spot_t* spot_new(){
         fprintf(stderr, "Memory allocation error");
         exit(1);          
     } 
+    spot->gold = 0;
     spot->visible = true;
     return spot;
 }
@@ -43,4 +45,16 @@ char spot_item(spot_t* spot){
 
 void spot_delete(spot_t* spot){
     free(spot);
+}
+
+void spot_set_item(spot_t* spot, char item){
+    spot->item = item;
+}
+
+void spot_add_gold(spot_t* spot, int gold){
+    spot->gold = gold;
+}
+
+int spot_get_gold(spot_t* spot){
+    return spot->gold;
 }

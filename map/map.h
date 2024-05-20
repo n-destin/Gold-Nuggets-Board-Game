@@ -65,7 +65,7 @@ void namedelete(void* item);
 /*
 * Inserts a newly created person with name 'c' into map at a random valid location
 */
-person_t* insert_person(map_t* map, char c);
+person_t* insert_person(map_t* map, char c, int seed);
 
 /**************** move_person ****************/
 /*
@@ -75,4 +75,4 @@ person_t* insert_person(map_t* map, char c);
 */
 bool move_person(map_t* map, person_t* person, char direction);
 
-
+void gold_initialize(map_t* map, int seed);

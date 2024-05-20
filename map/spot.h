@@ -52,3 +52,9 @@ bool get_visibility(spot_t* spot);
 * set visibility of spot
 */
 void set_visibility(spot_t* spot, bool visibility);
+
+int spot_get_gold(spot_t * spot);
+
+void spot_add_gold(spot_t* spot, int gold);
+
+void spot_set_item(spot_t* spot, char item);

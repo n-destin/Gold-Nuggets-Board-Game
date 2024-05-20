@@ -34,6 +34,8 @@ void person_addGold(person_t* person);
 */
 int person_getGold(person_t* person);
 
+char person_getLetter(person_t* person);
+
 /**************** person_getName ****************/
 /*
 * Returns person's gold count
@@ -63,6 +65,3 @@ void person_delete(person_t* person);
 * Sets person's name
 */
 void person_setName(person_t* person, char c);
-
-
-

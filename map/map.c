@@ -8,6 +8,11 @@
 #include "spot.h"
 #include "map.h"
 #include "person.h"
+#include <unistd.h> 
+
+#define GoldTotal 250      // amount of gold in the game
+#define GoldMinNumPiles 10 // minimum number of gold piles
+#define GoldMaxNumPiles 30 // maximum number of gold piles
 
 typedef struct map{ //Contains the rows and columns of the grid, and a grid of objects and a grid of players
     int rows;
@@ -95,7 +100,7 @@ void map_print(map_t* map, FILE* out){
             }
             else if(map->players[column + (row*map->columns)] != NULL){ //Found a player
                 person_t* person = map->players[column + (row*map->columns)]; //Get player there
-                fprintf(out, "%c", person_getName(person)); //Print player (all players are visible but could be changed)
+                fprintf(out, "%c", person_getLetter(person)); //Print player (all players are visible but could be changed)
             }else{
                 spot_t* spot = map->grid[column + (row*map->columns)]; //Get the spot
                 if(get_visibility(spot)){ //Check spot visibility
@@ -154,8 +159,8 @@ bool move_person(map_t* map, person_t* person, char direction){
         new_pos = current_pos + 1;
     }
     if(map->players[new_pos] != NULL){ //If there is a player in the way
-        char temp_name = person_getName(person); //Create temp
-        person_setName(person, person_getName(map->players[new_pos])); //Swap positions
+        char temp_name = person_getLetter(person); //Create temp
+        person_setName(person, person_getLetter(map->players[new_pos])); //Swap positions
         person_setName(map->players[new_pos], temp_name); //Swap positions
     }
     else if(spot_item(map->grid[new_pos]) == '.' || spot_item(map->grid[new_pos]) == '#' || spot_item(map->grid[new_pos]) == '*'){ //Valid movment square
@@ -173,28 +178,36 @@ bool move_person(map_t* map, person_t* person, char direction){
     return true;
 }
 
-person_t* insert_person(map_t* map, char c){ //The idea is to insert all possible position into a set and extract one randomly
-    set_t* indexes = set_new(); //Create set of possible indexes
-    int num_spaces = 0;
-    int final_index = 0;
+set_t* get_freeSpace(map_t * map, int* num_spaces){
+    set_t* toReturn = set_new();
     for(int i = 0; i < (map->columns*map->rows); i++){ //Go through all grid spots
-        if((spot_item(map->grid[i]) == '.') && map->players[i] == NULL){ //No players here and '.' present
+        if((spot_item(map->grid[i]) == '.') && map->players[i] == NULL && (spot_get_gold(map->grid[i])== 0)){ //No players here and '.' present and no gold
             char key[20];
-            sprintf(key, "%d", num_spaces);
+            sprintf(key, "%d", *num_spaces);
             int* value = malloc(sizeof(int));
             if (value != NULL) { 
                 *value = i;
-                set_insert(indexes, key, value); //Adds possible key to the set with current index
+                set_insert(toReturn, key, value); //Adds possible key to the set with current index
             } else {
                 fprintf(stderr, "Memory failure");
             }
-            num_spaces++;
+            (*num_spaces)++;
         }
     }
+
+    return toReturn;
+}
+
+person_t* insert_person(map_t* map, char c, int seed){ //The idea is to insert all possible position into a set and extract one randomly
+    set_t* indexes;
+    int num_spaces = 0;
+    int final_index = 0;
+    indexes = get_freeSpace(map, &num_spaces);
+    printf("Here: %d", num_spaces);
     if(num_spaces == 0){
         return NULL;
     }
-    srand(time(NULL)); //Seeds the random number generator
+    srand(seed); //Seeds the random number generator
     int random_number = rand() % (num_spaces); //Generate random number from 0 to num_spaces (possible values in set)
     char random_string[20];
     sprintf(random_string, "%d", random_number); //Turn random number to string
@@ -213,3 +226,27 @@ void namedelete(void* item) //Deletes a name as helper function for hashtable
     free(item);   
   }
 }
+
+void gold_initialize(map_t* map, int seed)
+{
+    srand(seed);
+    int space_count = 0;
+    set_t* indices = get_freeSpace(map, &space_count);
+    if(space_count == 0){
+        fprintf(stderr, "No more spaces for initializing gold");
+        exit(1);
+    }
+    int random_piles = rand() % (GoldMaxNumPiles + 1 - GoldMinNumPiles) + GoldMinNumPiles;
+    int gold_remaining = GoldTotal - random_piles; // each pile must have at least one gold
+    for(int pile = 0; pile<random_piles; pile++){
+        int random_index = rand() % space_count;
+        int random_gold = rand() % gold_remaining;
+        gold_remaining -= random_gold;
+        char random_number_string[20];
+        sprintf(random_number_string, "%d", random_index);
+        int* position = set_find(indices, random_number_string);
+        spot_t * spot = map->grid[*position];
+        spot_add_gold(spot, random_gold);
+        spot_set_item(spot, '*');
+    }
+}  

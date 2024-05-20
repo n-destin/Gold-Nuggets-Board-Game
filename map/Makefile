@@ -7,7 +7,7 @@ L = ../libcs50
 
 
 OBJS = map.o spot.o maptest.o person.o
-LLIBS = $L/libcs50-given.a
+LLIBS = $L/libcs50-given.a ../support/support.a
 LIBS = -lm
 
 
@@ -42,7 +42,3 @@ clean:
 	rm -f *~ *.o
 	rm -f hashtest
 	rm -f core
-
-
-
-
