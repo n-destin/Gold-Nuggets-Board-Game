@@ -104,6 +104,7 @@ void map_print(map_t* map, FILE* out){
             }else{
                 spot_t* spot = map->grid[column + (row*map->columns)]; //Get the spot
                 if(get_visibility(spot)){ //Check spot visibility
+                    // modify this to account for visible gold.
                     fprintf(out, "%c", spot_item(spot));
                 }
                 else{ //Print space
@@ -249,4 +250,90 @@ void gold_initialize(map_t* map, int seed)
         spot_add_gold(spot, random_gold);
         spot_set_item(spot, '*');
     }
-}  
+}
+
+
+// clone the current map. To be called whenever inserting a new player
+
+map_t* clone_map(map_t* current_map)
+{
+    if (current_map == NULL) {
+        return NULL;
+    }
+    
+    map_t* new_map = malloc(sizeof(map_t));
+    if (new_map == NULL) {
+        fprintf(stderr, "Memory allocation failure");
+        exit(1);
+    }
+
+    new_map->rows = current_map->rows;
+    new_map->columns = current_map->columns;
+
+    new_map->grid = malloc(current_map->rows * current_map->columns * sizeof(spot_t*));
+    new_map->players = malloc(current_map->rows * current_map->columns * sizeof(person_t*));
+
+    if (new_map->grid == NULL || new_map->players == NULL) {
+        fprintf(stderr, "Memory allocation failure");
+        exit(1);
+    }
+
+    // Clone grid
+    for (int i = 0; i < current_map->rows * current_map->columns; i++) {
+        if (current_map->grid[i] != NULL) {
+            new_map->grid[i] = spot_clone(current_map->grid[i]); // Assuming spot_clone is a function that correctly clones a spot
+        } else {
+            exit(1);
+        }
+    }
+
+    // Clone players
+    for (int i = 0; i < current_map->rows * current_map->columns; i++) {
+        if (current_map->players[i] != NULL) {
+            new_map->players[i] = person_clone(current_map->players[i]); // Assuming person_clone is a function that correctly clones a person
+        } else {
+            new_map->players[i] = NULL;
+        }
+    }
+
+    return new_map;
+}
+
+spot_t* spot_clone(spot_t* current_spot, int index) {
+    spot_t* new_spot = malloc(sizeof(spot_t));
+    new_spot->item = current_spot->item;
+    new_spot->person = current_spot->person;
+    new_spot->gold = current_spot->gold;
+    new_spot->visible = is_visible(index, current_spot->person->pos); // if the location is visible from hte current reference (position of hte player)
+    return new_spot;
+}
+
+person_t* person_clone(person_t* original) {
+    if (original == NULL) {
+        return NULL;
+    }
+    
+    person_t* clone = malloc(sizeof(person_t));
+    if (clone == NULL) {
+        fprintf(stderr, "Memory allocation error");
+        exit(1);
+    }
+
+    clone->letter = original->letter;
+    clone->pos = original->pos;
+    clone->gold = original->gold;
+    strcpy(clone->name, original->name);
+    clone->adress = original->adress; // Assuming addr_t can be copied directly
+
+    return clone;
+}
+
+
+void update_visibility(slot_t** grid, int reference){
+
+}
+
+
+void check_visibility(slot_t** grid, int reference){
+
+}

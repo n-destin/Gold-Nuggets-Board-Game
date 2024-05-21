@@ -23,7 +23,6 @@ int main(const int argc, char* argv[]) {
         move_person(map, d, 'a');
         gold_initialize(map, seed);
         map_print(map, stdout);
-        
         map_delete(map);
     }
     else {

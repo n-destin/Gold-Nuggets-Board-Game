@@ -7,7 +7,7 @@
 
 typedef struct spot{ //Contains item, person, and a visibility
     char item;
-    char person;
+    char person; // the person on the slot
     bool visible;
     int gold;
 } spot_t;

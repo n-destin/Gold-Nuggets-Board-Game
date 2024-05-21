@@ -17,8 +17,13 @@ LIBS = -lm
 CFLAGS = -Wall -pedantic -std=c11 -ggdb -I$L
 CC = gcc
 MAKE = make
+LIB = map.a
+
 # for memory-leak tests
 VALGRIND = valgrind --leak-check=full --show-leak-kinds=all
+
+$(LIB): $(OBJS)
+	ar cr $(LIB) $(OBJS)
 
 maptest: $(OBJS) $(LLIBS)
 	$(CC) $(CFLAGS) $(OBJS) $(LLIBS) $(LIBS) -o $@
