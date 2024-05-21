@@ -2,10 +2,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h> 
-#include "message.h" 
-#include "log.h"
-#include "map.h"
-#include "person.h"
+#include "../support/message.h" 
+#include "../support/log.h"
+#include "../map/map.h"
+#include "../map/person.h"
 
 #define MaxNameLength 50   // max number of chars in playerName
 #define MaxPlayers 26      // maximum number of players
@@ -14,22 +14,28 @@
 #define GoldMaxNumPiles 30 // maximum number of gold piles
 
 
-typedef struct {
-    map_t* map;
-    player_t players[MAX_PLAYERS];
-    int numPlayers;
-    int numSpectators;
-    int totalGold;
-    int goldRemaining;
-    addr_t spectatorAddr;
-} game_state_t;
+// each players's map has different visibility
+typedef struct player_map {
+    slot_t** grid;
+    person_t * owner;
+    slots_t** golds_visible; // the slots of the golds visible from the positions
+} player_map_t;
 
-game_state_t gameState;
+typedef struct {
+    map_t* map; // this is the base map
+    player_map_t* players_maps[MAX_PLAYERS];
+    int num_players;
+    int num_spectators; // binary
+    int total_gold;
+    int remaining_gold;
+    addr_t spectator_adress;
+} game_t;
+
+game_t game;
 
 void initialize_game(map_t * map);
 void handle_client_messages();
 void send_summary_and_quit();
-void setup_network();
 bool handle_message(void* arg, const addr_t from, const char* message);
 
 int main(int argc, char *argv[]) {
@@ -37,9 +43,7 @@ int main(int argc, char *argv[]) {
         fprintf(stderr, "Usage: %s <mapfile> [seed]\n", argv[0]);
         exit(1);
     }
-
-    map_filepathname = argv[1];
-
+    char* map_filepathname = argv[1];
     long seed = (argc == 3) ? atol(argv[2]) : getpid();
     if (seed <= 0 && argc == 3) {
         fprintf(stderr, "Seed must be a positive integer\n");
@@ -55,65 +59,79 @@ int main(int argc, char *argv[]) {
 }
 
 void initialize_game(map_t* map) {
-    gameState.numPlayers = 0;
-    gameState.numSpectators = 0;
-    gameState.totalGold = GoldTotal;
-    gameState.goldRemaining = GoldTotal;
-    gameState.spectatorAddr = message_noAddr();
-
-    // Drop gold piles randomly on the map
-    int numPiles = GoldMinNumPiles + rand() % (GoldMaxNumPiles - GoldMinNumPiles + 1);
-    for (int i = 0; i < numPiles; i++) {
-        
-        // Placeholder for actual map and gold placement logic
-    }
-
+    game.num_players = 0;
+    game.num_spectators = 0;
+    game.total_gold = GoldTotal;
+    game.remaining_gold = GoldTotal;
+    game.spectator_adress = message_noAddr(); // intialize it to no adress  
+    game.map = map_new();
+    gold_initialize(game.map, seed);
+    
+    
 }
 
 void handle_client_messages() {
     printf("Handling client messages\n");
-    message_loop(&gameState, 0, NULL, NULL, handle_message);
+    message_loop(&game, 0, NULL, NULL, handle_message);
 }
 
 void send_summary_and_quit() {
     printf("Game over, sending summary and quitting\n");
 
     char summary[1024] = "GAME OVER:\n";
-    for (int i = 0; i < gameState.numPlayers; i++) {
+    for (int i = 0; i < game.numPlayers; i++) {
         char playerSummary[128];
         snprintf(playerSummary, sizeof(playerSummary), "%c %d %s\n", 
-                 'A' + i, gameState.players[i].purse, gameState.players[i].name);
+                 'A' + i, game.players[i].purse, game.players[i].name);
         strncat(summary, playerSummary, sizeof(summary) - strlen(summary) - 1);
     }
 
     // Send QUIT message with summary to all clients
-    for (int i = 0; i < gameState.numPlayers; i++) {
+    for (int i = 0; i < game.numPlayers; i++) {
         // Placeholder: send message to each player
     }
-    if (gameState.numSpectators > 0) {
-        message_send(gameState.spectatorAddr, "QUIT");
+    if (game.numSpectators > 0) {
+        message_send(game.spectatorAddr, "QUIT");
     }
 
     printf("%s", summary);
 }
 
-void setup_network() {
-    FILE *logFP = stderr;
-    int port = message_init(logFP);
+void setup_network(game_t* game) {
+    int port = message_init(stderr);
     if (port == 0) {
         fprintf(stderr, "Failed to initialize messaging system\n");
         exit(1);
     }
-    message_send()
+    broadcast(port, game);
 }
 
-bool handle_message(void* arg, const addr_t from, const char* message) {
-    game_state_t* state = (game_state_t*)arg;
+void broadcast(char* message, game_t* game)
+{
+    for(int index = 0; index<game->num_players; index++){
+        message_send(map->players[index]->adress, message);
+    }
+}
 
+int find_sender(void* const addr_t from, game_t* game){
+    for(int index = 0; index<game.num_players; index++){
+        if(message_eqAddr(game->maps[index]->person->adress, from)){
+            return index;
+        }
+    }
+    return -1;
+}
+
+bool handle_message(void* arg, const addr_t from, const char* message, const char* map_filepathname) {
+    game_t* state = (game_t*)arg; // change state -> game. consistency in naming
+    int map_index  = find_sender(from, game); // index of the map of the sender
     // Handle different types of messages from clients
     if (strncmp(message, "JOIN ", 5) == 0) {
-        if (state->numPlayers < MAX_PLAYERS) {
-            person_t* newPlayer = person_new();
+        if (state->num_players < MAX_PLAYERS) {
+            person_t* new_player = person_new(); 
+            player_map_t* new_map = malloc(player_map_t);
+            
+            new_map->player = new_player;
             strncpy(newPlayer->name, message + 5, MaxNameLength - 1);
             newPlayer->person->gold = 0;
             state->numPlayers++;
@@ -167,15 +185,15 @@ bool handle_message(void* arg, const addr_t from, const char* message) {
             state->players[playerIndex].name[0] = '\0';
             // Notify other players and spectators
             for (int i = 0; i < state->numPlayers; i++) {
-                // Placeholder: send updated map to each player
+                // send updated map to each player
             }
             if (state->numSpectators > 0) {
-                // Placeholder: send updated map to spectator
+                // send updated map to spectator
             }
         } else {
             message_send(from, "INVALID PLAYER");
         }
     }
 
-    return false; // Continue handling messages
+    return false; 
 }
