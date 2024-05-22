@@ -19,7 +19,7 @@ spot_t* spot_new(){
         exit(1);          
     } 
     spot->gold = 0;
-    spot->visible = true;
+    spot->visible = false;
     return spot;
 }
 
