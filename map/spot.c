@@ -23,6 +23,22 @@ spot_t* spot_new(){
     return spot;
 }
 
+
+
+spot_t* spot_clone(spot_t* current_spot, int index, int position) {
+    spot_t* new_spot = malloc(sizeof(spot_t));
+    if(new_spot == NULL){
+        return NULL;
+    }
+    new_spot->item = current_spot->item;
+    new_spot->person = current_spot->person;
+    new_spot->gold = current_spot->gold;
+    new_spot->visible = true;
+    //uncomment the following line and delete the above when is_visible function is implemented
+   // new_spot->visible = is_visible(index, position); // if the location is visible from hte current reference (position of hte player)
+    return new_spot;
+}
+
 bool spot_insert(spot_t* spot, char c){
     if(spot == NULL){ //Makes sure possible psot
         return false;

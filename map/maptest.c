@@ -11,17 +11,18 @@ int main(const int argc, char* argv[]) {
         char* map_path = argv[1];
         map_t* map = map_new(map_path); 
         long seed = (argc == 3) ? atol(argv[2]) : getpid();
+        srand(seed);
         // map_print(map, stdout);
-        person_t* a = insert_person(map, 'a', seed);
-        person_t* b = insert_person(map, 'b', seed);
-        person_t* c = insert_person(map, 'c', seed);
-        person_t* d = insert_person(map, 'd', seed);
+        person_t* a = insert_person(map, 'a', "someone");
+        person_t* b = insert_person(map, 'b', "someone");
+        person_t* c = insert_person(map, 'c', "someone");
+        person_t* d = insert_person(map, 'd', "someone");
         map_print(map, stdout);
         move_person(map, a, 'a');
         move_person(map, b, 'a');
         move_person(map, c, 'a');
         move_person(map, d, 'a');
-        gold_initialize(map, seed);
+        gold_initialize(map);
         map_print(map, stdout);
         map_delete(map);
     }

@@ -12,6 +12,7 @@
 
 /**************** global types ****************/
 typedef struct person person_t;
+typedef struct sockaddr_in addr_t;
 
 /**************** functions ****************/
 
@@ -20,7 +21,7 @@ typedef struct person person_t;
 * Allocates memory for a spot. Sets name to 'c' and sets gold to 0.
 * Caller is responsible for calling person_delete
 */
-person_t* person_new(char c);
+person_t* person_new(char c, char* name);
 
 /**************** person_addGold ****************/
 /*
@@ -40,7 +41,7 @@ char person_getLetter(person_t* person);
 /*
 * Returns person's gold count
 */
-char person_getName(person_t* person);
+char* person_getName(person_t* person);
 
 /**************** person_getGold ****************/
 /*
@@ -54,6 +55,8 @@ void person_setPos(person_t* person, int new_pos);
 */
 int person_getPos(person_t* person);
 
+addr_t person_getAddr(person_t* person);
+
 /**************** person_delete ****************/
 /*
 * Delete person
@@ -65,3 +68,6 @@ void person_delete(person_t* person);
 * Sets person's name
 */
 void person_setName(person_t* person, char c);
+
+
+person_t* person_clone( person_t* original);

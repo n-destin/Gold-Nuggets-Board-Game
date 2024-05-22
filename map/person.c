@@ -32,10 +32,10 @@ person_t* person_new(char c, char* name){
     sprintf(port_string, "%d", port);
     message_setAddr(name, port_string, &adress);
 
-    // if(!message_isAddr(adress)){
-    //     fprintf(stderr, "Unablen to initialize adress");
-    //     exit(1);
-    // }
+    if(!message_isAddr(adress)){
+        fprintf(stderr, "Unablen to initialize adress");
+        exit(1);
+    }
     person->letter = c;
     person->adress = adress;
     strcpy(person->name, name);
@@ -45,6 +45,10 @@ person_t* person_new(char c, char* name){
 
 void person_addGold(person_t* person){
     person->gold = person->gold + 1;
+}
+
+addr_t person_getAddr(person_t* person){
+    return person->adress;
 }
 
 int person_getGold(person_t* person){
@@ -79,4 +83,26 @@ int person_getPos(person_t* person){
 
 void person_delete(person_t* person){
     free(person);
+}
+
+// // Cloning a person
+person_t* person_clone( person_t* original) {
+    person_t* clone = malloc(sizeof(person_t*));
+    
+    if (clone == NULL) {
+        fprintf(stderr, "Memory allocation error");
+        exit(1);
+    }
+
+    if(original == NULL){
+        return NULL;
+    }
+
+    clone->letter = original->letter;
+    clone->pos = original->pos;
+    clone->gold = original->gold;
+    strcpy(clone->name, original->name);
+    clone->adress = original->adress; // Assuming addr_t can be copied directly
+
+    return clone;
 }

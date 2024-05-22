@@ -10,9 +10,12 @@
 #include "person.h"
 #include <unistd.h> 
 
+// spot.h
+
 #define GoldTotal 250      // amount of gold in the game
 #define GoldMinNumPiles 10 // minimum number of gold piles
 #define GoldMaxNumPiles 30 // maximum number of gold piles
+
 
 typedef struct map{ //Contains the rows and columns of the grid, and a grid of objects and a grid of players
     int rows;
@@ -199,7 +202,7 @@ set_t* get_freeSpace(map_t * map, int* num_spaces){
     return toReturn;
 }
 
-person_t* insert_person(map_t* map, char c, int seed){ //The idea is to insert all possible position into a set and extract one randomly
+person_t* insert_person(map_t* map, char c, char* name){ //The idea is to insert all possible position into a set and extract one randomly
     set_t* indexes;
     int num_spaces = 0;
     int final_index = 0;
@@ -208,13 +211,12 @@ person_t* insert_person(map_t* map, char c, int seed){ //The idea is to insert a
     if(num_spaces == 0){
         return NULL;
     }
-    srand(seed); //Seeds the random number generator
     int random_number = rand() % (num_spaces); //Generate random number from 0 to num_spaces (possible values in set)
     char random_string[20];
     sprintf(random_string, "%d", random_number); //Turn random number to string
     int* temp = set_find(indexes, random_string); //Finds that string in the set
     final_index = *temp; //Sets the index associated with that value
-    person_t* person = person_new(c); //Create a new person with name 'c'
+    person_t* person = person_new(c, name); //Create a new person with name 'c' and name 'name'
     person_setPos(person, final_index); //Set position in person struct
     map->players[final_index] = person; //Set position in map
     set_delete(indexes, namedelete); //Deletes set 
@@ -228,9 +230,8 @@ void namedelete(void* item) //Deletes a name as helper function for hashtable
   }
 }
 
-void gold_initialize(map_t* map, int seed)
+void gold_initialize(map_t* map)
 {
-    srand(seed);
     int space_count = 0;
     set_t* indices = get_freeSpace(map, &space_count);
     if(space_count == 0){
@@ -254,7 +255,6 @@ void gold_initialize(map_t* map, int seed)
 
 
 // clone the current map. To be called whenever inserting a new player
-
 map_t* clone_map(map_t* current_map)
 {
     if (current_map == NULL) {
@@ -281,12 +281,11 @@ map_t* clone_map(map_t* current_map)
     // Clone grid
     for (int i = 0; i < current_map->rows * current_map->columns; i++) {
         if (current_map->grid[i] != NULL) {
-            new_map->grid[i] = spot_clone(current_map->grid[i]); // Assuming spot_clone is a function that correctly clones a spot
+            new_map->grid[i] = spot_clone(current_map->grid[i], i, 0); // Assuming spot_clone is a function that correctly clones a spot
         } else {
             exit(1);
         }
     }
-
     // Clone players
     for (int i = 0; i < current_map->rows * current_map->columns; i++) {
         if (current_map->players[i] != NULL) {
@@ -295,45 +294,26 @@ map_t* clone_map(map_t* current_map)
             new_map->players[i] = NULL;
         }
     }
-
     return new_map;
 }
 
-spot_t* spot_clone(spot_t* current_spot, int index) {
-    spot_t* new_spot = malloc(sizeof(spot_t));
-    new_spot->item = current_spot->item;
-    new_spot->person = current_spot->person;
-    new_spot->gold = current_spot->gold;
-    new_spot->visible = is_visible(index, current_spot->person->pos); // if the location is visible from hte current reference (position of hte player)
-    return new_spot;
+person_t** get_players(map_t* map){
+    return map->players;
 }
 
-person_t* person_clone(person_t* original) {
-    if (original == NULL) {
-        return NULL;
-    }
-    
-    person_t* clone = malloc(sizeof(person_t));
-    if (clone == NULL) {
-        fprintf(stderr, "Memory allocation error");
-        exit(1);
-    }
-
-    clone->letter = original->letter;
-    clone->pos = original->pos;
-    clone->gold = original->gold;
-    strcpy(clone->name, original->name);
-    clone->adress = original->adress; // Assuming addr_t can be copied directly
-
-    return clone;
+int get_rows(map_t * map){
+    return map->rows;
 }
 
-
-void update_visibility(slot_t** grid, int reference){
-
+int get_columns(map_t* map){
+    return map->columns;
 }
 
+// void update_visibility(spot_t** grid, int reference){
 
-void check_visibility(slot_t** grid, int reference){
+// }
 
-}
+
+// void check_visibility(spot_t** grid, int reference){
+
+// }

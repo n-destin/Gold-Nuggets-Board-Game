@@ -15,6 +15,7 @@
 
 /**************** global types ****************/
 typedef struct map map_t;
+// typedef struct player person_t*
 
 /**************** functions ****************/
 
@@ -26,6 +27,7 @@ typedef struct map map_t;
 */
 map_t* map_new(char* path);
 
+map_t* clone_map(map_t* current_map);
 
 /**************** map_validate ****************/
 /*
@@ -61,11 +63,13 @@ void map_delete(map_t* map);
 */
 void namedelete(void* item);
 
+person_t** get_players(map_t* map);
+
 /**************** insert_person ****************/
 /*
 * Inserts a newly created person with name 'c' into map at a random valid location
 */
-person_t* insert_person(map_t* map, char c, int seed);
+person_t* insert_person(map_t* map, char c, char* name);
 
 /**************** move_person ****************/
 /*
@@ -75,4 +79,8 @@ person_t* insert_person(map_t* map, char c, int seed);
 */
 bool move_person(map_t* map, person_t* person, char direction);
 
-void gold_initialize(map_t* map, int seed);
+void gold_initialize(map_t* map);
+
+int get_rows(map_t * map);
+
+int get_columns(map_t* map);
