@@ -7,7 +7,7 @@ L = ../libcs50
 
 
 OBJS = server.o
-LLIBS = $L/libcs50-given.a ../map/map.a
+LLIBS = ../libcs50/libcs50-given.a ../support/support.a ../map/map.a 
 LIBS = -lm
 
 
@@ -17,19 +17,15 @@ LIBS = -lm
 CFLAGS = -Wall -pedantic -std=c11 -ggdb -I$L
 CC = gcc
 MAKE = make
-LIB = map.a
 
 # for memory-leak tests
 VALGRIND = valgrind --leak-check=full --show-leak-kinds=all
-
-$(LIB): $(OBJS)
-	ar cr $(LIB) $(OBJS)
 
 server: $(OBJS) $(LLIBS)
 	$(CC) $(CFLAGS) $(OBJS) $(LLIBS) $(LIBS) -o $@
 
 
-server.o: server.h
+server.o: server.h ../libcs50/file.h ../libcs50/hashtable.h 
 
 test: server
 	./server ../maps/small.txt

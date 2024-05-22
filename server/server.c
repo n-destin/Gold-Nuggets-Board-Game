@@ -6,6 +6,8 @@
 #include "../support/log.h"
 #include "../map/map.h"
 #include "../map/person.h"
+#include "../libcs50/hashtable.h"
+#include "../libcs50/file.h"
 
 #define MaxNameLength 50   // max number of chars in playerName
 #define MaxPlayers 26      // maximum number of players
@@ -14,16 +16,10 @@
 #define GoldMaxNumPiles 30 // maximum number of gold piles
 
 
-// each players's map has different visibility
-typedef struct player_map {
-    slot_t** grid;
-    person_t * owner;
-    slots_t** golds_visible; // the slots of the golds visible from the positions
-} player_map_t;
 
 typedef struct {
     map_t* map; // this is the base map
-    player_map_t* players_maps[MAX_PLAYERS];
+    hashtable_t* maps;
     int num_players;
     int num_spectators; // binary
     int total_gold;
@@ -33,10 +29,13 @@ typedef struct {
 
 game_t game;
 
-void initialize_game(map_t * map);
+typedef struct sockaddr_in addr_t;
+
+void initialize_game();
 void handle_client_messages();
 void send_summary_and_quit();
 bool handle_message(void* arg, const addr_t from, const char* message);
+void setup_network();
 
 int main(int argc, char *argv[]) {
     if (argc < 2 || argc > 3) {
@@ -49,25 +48,24 @@ int main(int argc, char *argv[]) {
         fprintf(stderr, "Seed must be a positive integer\n");
         exit(1);
     }
-    map_t * map = map_new(map_filepathname);
+    // map_t * map = map_new(map_filepathname);
     srand(seed);
-    setup_network();
-    initialize_game();
+    initialize_game(map_filepathname);
+    setup_network(game);
     handle_client_messages();
-    send_summary_and_quit();
+    send_summary_and_quit(game);
     return 0;
 }
 
-void initialize_game(map_t* map) {
+void initialize_game(char* file_pathname) {
     game.num_players = 0;
+    game.maps = hashtable_new(MaxPlayers);
     game.num_spectators = 0;
     game.total_gold = GoldTotal;
     game.remaining_gold = GoldTotal;
     game.spectator_adress = message_noAddr(); // intialize it to no adress  
-    game.map = map_new();
-    gold_initialize(game.map, seed);
-    
-    
+    game.map = map_new(file_pathname);
+    gold_initialize(game.map);
 }
 
 void handle_client_messages() {
@@ -75,125 +73,114 @@ void handle_client_messages() {
     message_loop(&game, 0, NULL, NULL, handle_message);
 }
 
-void send_summary_and_quit() {
+void send_summary_and_quit(game_t * game) {
     printf("Game over, sending summary and quitting\n");
 
     char summary[1024] = "GAME OVER:\n";
-    for (int i = 0; i < game.numPlayers; i++) {
+    person_t** players = get_players(game->map);
+    for (int i = 0; i < (get_rows(game->map) * get_columns(game->map)); i++) {
         char playerSummary[128];
-        snprintf(playerSummary, sizeof(playerSummary), "%c %d %s\n", 
-                 'A' + i, game.players[i].purse, game.players[i].name);
+        snprintf(playerSummary, sizeof(playerSummary), "%c %d %s\n", person_getLetter(players[i]), person_getGold(players[i]), person_getName(players[i]));
         strncat(summary, playerSummary, sizeof(summary) - strlen(summary) - 1);
     }
 
     // Send QUIT message with summary to all clients
-    for (int i = 0; i < game.numPlayers; i++) {
-        // Placeholder: send message to each player
-    }
-    if (game.numSpectators > 0) {
-        message_send(game.spectatorAddr, "QUIT");
-    }
+    // for (int i = 0; i < game.numPlayers; i++) {
+    //     message_send()
+    // }
+
+    // if (game.numSpectators > 0) {
+    //     message_send(game.spectatorAddr, "QUIT");
+    // }
 
     printf("%s", summary);
 }
 
+void broadcast(char* message, game_t* game)
+{       
+    person_t** players = get_players(game->map);
+    for(int index = 0; index < (get_rows(game->map) * get_columns(game->map)); index++){
+        person_t * person = players[index];
+        if (person != NULL){
+            message_send(person_getAddr(person), message);
+        }
+    }
+}
+
 void setup_network(game_t* game) {
+    char port_string[120];
     int port = message_init(stderr);
     if (port == 0) {
         fprintf(stderr, "Failed to initialize messaging system\n");
         exit(1);
     }
-    broadcast(port, game);
+    sprintf(port_string, "%d", port);
+    broadcast(port_string, game);
 }
 
-void broadcast(char* message, game_t* game)
-{
-    for(int index = 0; index<game->num_players; index++){
-        message_send(map->players[index]->adress, message);
-    }
-}
-
-int find_sender(void* const addr_t from, game_t* game){
-    for(int index = 0; index<game.num_players; index++){
-        if(message_eqAddr(game->maps[index]->person->adress, from)){
-            return index;
+person_t* find_sender(addr_t from, game_t* game){
+    person_t ** players = get_players(game->map);
+    for(int index = 0; index < (get_columns(game->map) * get_rows(game->map)); index++){
+        person_t* person = players[index];
+        if(person != NULL){
+            if(message_eqAddr(person_getAddr(players[index]), from)){
+                return person;
+            }
         }
     }
-    return -1;
+    return NULL;
 }
 
-bool handle_message(void* arg, const addr_t from, const char* message, const char* map_filepathname) {
-    game_t* state = (game_t*)arg; // change state -> game. consistency in naming
-    int map_index  = find_sender(from, game); // index of the map of the sender
+
+bool handle_message(void* arg, const addr_t from, const char* message) {
+    game_t* game = (game_t*)arg; // change state -> game. consistency in naming
     // Handle different types of messages from clients
-    if (strncmp(message, "JOIN ", 5) == 0) {
-        if (state->num_players < MAX_PLAYERS) {
-            person_t* new_player = person_new(); 
-            player_map_t* new_map = malloc(player_map_t);
-            
-            new_map->player = new_player;
-            strncpy(newPlayer->name, message + 5, MaxNameLength - 1);
-            newPlayer->person->gold = 0;
-            state->numPlayers++;
+    if (strncmp(message, "PLAY ", 5) == 0) {
+        if (game->num_players < MaxPlayers) {
+            char name[25];
+            char character = 'A' + game->num_players; // getting a chracters
+            strncpy(name, message + 5, MaxNameLength - 1); 
+            person_t* new_player = insert_person(game->map, character, name);
+            map_t* new_map = clone_map(game->map);
+            if(!hashtable_insert(game->maps, message_stringAddr(person_getAddr(new_player)), new_map)){
+                fprintf(stderr, "unable to append the map in the hashtabel of maps");
+                return NULL;
+            }
             // Respond with player letter and initial map
             char response[256];
-            snprintf(response, sizeof(response), "WELCOME %c\n%s", 'A' + state->numPlayers - 1, message);
+            sprintf(response, "WELCOME %c\n", 'A' + character);
             message_send(from, response);
         } else {
             message_send(from, "GAME FULL");
         }
     } else if (strncmp(message, "SPECTATE ", 9) == 0) {
-        if (state->numSpectators == 0) {
-            state->spectatorAddr = from;
-            state->numSpectators = 1;
-            // Respond with initial map
-            char response[256];
-            snprintf(response, sizeof(response), "MAP\n%s", message);
-            message_send(from, response);
-        } else {
-            message_send(state->spectatorAddr, "QUIT");
-            state->spectatorAddr = from;
-            // Respond with initial map
-            char response[256];
-            snprintf(response, sizeof(response), "MAP\n%s", message);
-            message_send(from, response);
+        if (game->num_spectators != 0) {
+            message_send(game->spectator_adress, "QUIT");
         }
-    } else if (strncmp(message, "MOVE ", 5) == 0) {
+        game->spectator_adress = from;
+        char response[256];
+        sprintf(response, "WELCOME SPECTATOR\n");
+        message_send(from, response);
+    } else if (strncmp(message, "KEY ", 4) == 0) {
         // Handle player movement
-        int playerIndex = message[5] - 'A';
-        if (playerIndex >= 0 && playerIndex < state->numPlayers) {
-            player_t* player = &state->players[playerIndex];
-            char direction = message[6];
-            if (move_person(state->map, player, direction)) {
-                // Update map and notify all players and spectators
-                for (int i = 0; i < state->numPlayers; i++) {
-                    // Placeholder: send updated map to each player
-                }
-                if (state->numSpectators > 0) {
-                    // Placeholder: send updated map to spectator
-                }
-            } else {
-                message_send(from, "INVALID MOVE");
+        char direction = message[5]; 
+        person_t* sender = find_sender(from, game);
+        if(sender == NULL){
+            broadcast("QUIT", game);
+        }
+        // mov the person on the main map
+        move_person(game->map, sender, direction);
+        // move the person on all other maps.
+        person_t** players = get_players(game->map);
+        for(int index = 0; index<(get_columns(game->map) * get_rows(game->map)); index++){
+            person_t* person = players[index];
+            if(person != NULL){
+                map_t* map = (map_t*) hashtable_find(game->maps, message_stringAddr(person_getAddr(person)));
+                move_person(map, sender, direction);
             }
+        }
         } else {
             message_send(from, "INVALID PLAYER");
         }
-    } else if (strncmp(message, "QUIT", 4) == 0) {
-        int playerIndex = message[5] - 'A';
-        if (playerIndex >= 0 && playerIndex < state->numPlayers) {
-            // Remove player from the game
-            state->players[playerIndex].name[0] = '\0';
-            // Notify other players and spectators
-            for (int i = 0; i < state->numPlayers; i++) {
-                // send updated map to each player
-            }
-            if (state->numSpectators > 0) {
-                // send updated map to spectator
-            }
-        } else {
-            message_send(from, "INVALID PLAYER");
-        }
-    }
-
     return false; 
 }
