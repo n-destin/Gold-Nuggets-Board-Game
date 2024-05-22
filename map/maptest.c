@@ -9,11 +9,13 @@
 int main(const int argc, char* argv[]) {
     if (argc == 2) {  
         char* map_path = argv[1];
+        
         map_t* map = map_new(map_path); 
         long seed = (argc == 3) ? atol(argv[2]) : getpid();
         srand(seed);
+        // addr_t dummy = message_noAddr();
         // map_print(map, stdout);
-        person_t* a = insert_person(map, 'a', "someone");
+        person_t* a = insert_person(map, 'a', "someone", );
         person_t* b = insert_person(map, 'b', "someone");
         person_t* c = insert_person(map, 'c', "someone");
         person_t* d = insert_person(map, 'd', "someone");
@@ -25,12 +27,7 @@ int main(const int argc, char* argv[]) {
         move_person(map, a, 'y');
         move_person(map, b, 'u');
         move_person(map, c, 'b');
-        move_person(map, d, 'n');
-        move_person(map, a, 'a');
-        move_person(map, b, 'a');
-        move_person(map, c, 'a');
-        move_person(map, d, 'a');
-        gold_initialize(map);
+        move_person(map, d, 'n');gold_initialize(map, seed);
         map_print(map, stdout);
         map_delete(map);
     }
