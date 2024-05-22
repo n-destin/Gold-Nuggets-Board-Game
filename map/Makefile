@@ -25,7 +25,7 @@ VALGRIND = valgrind --leak-check=full --show-leak-kinds=all
 $(LIB): $(OBJS)
 	ar cr $(LIB) $(OBJS)
 
- $(OBJS) $(LLIBS)
+maptes: $(OBJS) $(LLIBS)
 	$(CC) $(CFLAGS) $(OBJS) $(LLIBS) $(LIBS) -o $@
 
 map.o: map.h spot.h person.h
@@ -33,8 +33,8 @@ spot.o: spot.h
 visibility.o:
 person.o: person.h
 
-#test: maptest
-#	./maptest ../maps/small.txt
+test: maptest
+	./maptest ../maps/small.txt
 
 #valgrind: maptest
 #	$(VALGRIND) ./maptest ../maps/small.txt

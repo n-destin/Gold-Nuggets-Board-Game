@@ -22,7 +22,7 @@ typedef struct person{// Person has a name, position, and a quantity of gold
 
 person_t* person_new(char c, char* name, addr_t address){
     person_t* person = malloc(sizeof(person_t));
-    char port_string[16];
+    // char port_string[16];
     if (person == NULL) { //Checks for memory allocation
         fprintf(stderr, "Memory allocation error");
         exit(1);          
