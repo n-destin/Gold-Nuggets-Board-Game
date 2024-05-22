@@ -53,7 +53,7 @@ int main(int argc, char *argv[]) {
     initialize_game(map_filepathname);
     setup_network(game);
     handle_client_messages();
-    send_summary_and_quit(game);
+    // send_summary_and_quit(game);
     return 0;
 }
 
@@ -115,7 +115,7 @@ void setup_network(game_t* game) {
         exit(1);
     }
     sprintf(port_string, "%d", port);
-    broadcast(port_string, game);
+    // broadcast(port_string, game);
 }
 
 person_t* find_sender(addr_t from, game_t* game){
