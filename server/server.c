@@ -130,7 +130,7 @@ void broadcast(char* action, game_t* game, person_t* sender)
                     set_person(map, sender);
                 }else if(strncmp(action, "move ", 5) == 0){
                     char direction = action[5];
-                    // move_person(map, sender, direction);
+                    move_person(map, sender, direction);
                 }
             }
         }

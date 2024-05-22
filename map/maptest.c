@@ -18,6 +18,14 @@ int main(const int argc, char* argv[]) {
         person_t* c = insert_person(map, 'c', "someone");
         person_t* d = insert_person(map, 'd', "someone");
         map_print(map, stdout);
+        move_person(map, a, 'h');
+        move_person(map, b, 'l');
+        move_person(map, c, 'j');
+        move_person(map, d, 'k');
+        move_person(map, a, 'y');
+        move_person(map, b, 'u');
+        move_person(map, c, 'b');
+        move_person(map, d, 'n');
         move_person(map, a, 'a');
         move_person(map, b, 'a');
         move_person(map, c, 'a');
