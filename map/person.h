@@ -21,7 +21,7 @@ typedef struct sockaddr_in addr_t;
 * Allocates memory for a spot. Sets name to 'c' and sets gold to 0.
 * Caller is responsible for calling person_delete
 */
-person_t* person_new(char c, char* name);
+person_t* person_new(char c, char* name, addr_t address);
 
 /**************** person_addGold ****************/
 /*

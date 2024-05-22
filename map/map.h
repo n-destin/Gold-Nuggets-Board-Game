@@ -15,6 +15,8 @@
 
 /**************** global types ****************/
 typedef struct map map_t;
+typedef struct sockaddr_in addr_t;
+
 // typedef struct player person_t*
 
 /**************** functions ****************/
@@ -69,7 +71,7 @@ person_t** get_players(map_t* map);
 /*
 * Inserts a newly created person with name 'c' into map at a random valid location
 */
-person_t* insert_person(map_t* map, char c, char* name);
+person_t* insert_person(map_t* map, char c, char* name, addr_t address);
 
 /**************** move_person ****************/
 /*
@@ -84,3 +86,7 @@ void gold_initialize(map_t* map);
 int get_rows(map_t * map);
 
 int get_columns(map_t* map);
+
+char* grid_to_string(map_t* map);
+
+void set_person(map_t* map, person_t* person);

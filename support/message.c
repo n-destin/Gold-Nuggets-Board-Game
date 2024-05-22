@@ -160,6 +160,7 @@ message_setAddr(const char* hostname, const char* portString, addr_t* addr)
     return false;
   }
   
+  
   // Look up the hostname
   struct hostent *hostp = gethostbyname(hostname);
   if (hostp == NULL) {

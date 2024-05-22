@@ -15,10 +15,10 @@ server: $(OBJS) $(LLIBS)
 server.o: server.h
 
 test: server
-		./server ../maps/small.txt
+		./server ../maps/main.txt
 
 valgrind: server
-		$(VALGRIND) ./server ../maps/small.txt
+		$(VALGRIND) ./server ../maps/main.txt
 
 .PHONY: test valgrind clean
 

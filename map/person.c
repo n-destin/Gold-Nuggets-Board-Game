@@ -17,27 +17,18 @@ typedef struct person{// Person has a name, position, and a quantity of gold
     int pos;
     int gold;
     char name[MaxNameLength];
-    addr_t adress;
+    addr_t address;
 } person_t;
 
-person_t* person_new(char c, char* name){
+person_t* person_new(char c, char* name, addr_t address){
     person_t* person = malloc(sizeof(person_t));
     char port_string[16];
     if (person == NULL) { //Checks for memory allocation
         fprintf(stderr, "Memory allocation error");
         exit(1);          
     } 
-    addr_t adress = message_noAddr();
-    int port = message_init(stderr);
-    sprintf(port_string, "%d", port);
-    message_setAddr(name, port_string, &adress);
-
-    if(!message_isAddr(adress)){
-        fprintf(stderr, "Unablen to initialize adress");
-        exit(1);
-    }
     person->letter = c;
-    person->adress = adress;
+    person->address = address;
     strcpy(person->name, name);
     person->gold = 0;
     return person;
@@ -48,7 +39,7 @@ void person_addGold(person_t* person){
 }
 
 addr_t person_getAddr(person_t* person){
-    return person->adress;
+    return person->address;
 }
 
 int person_getGold(person_t* person){
@@ -102,7 +93,7 @@ person_t* person_clone( person_t* original) {
     clone->pos = original->pos;
     clone->gold = original->gold;
     strcpy(clone->name, original->name);
-    clone->adress = original->adress; // Assuming addr_t can be copied directly
+    clone->address = original->address; // Assuming addr_t can be copied directly
 
     return clone;
 }

@@ -9,6 +9,7 @@
 #include "map.h"
 #include "person.h"
 #include <unistd.h> 
+#include <arpa/inet.h>
 
 // spot.h
 
@@ -23,6 +24,7 @@ typedef struct map{ //Contains the rows and columns of the grid, and a grid of o
     spot_t** grid;
     person_t** players; 
 } map_t;
+
 
 map_t* map_new(char* path){
     map_t* map = calloc(1, sizeof(map_t)); //Allocates memory for map
@@ -202,7 +204,7 @@ set_t* get_freeSpace(map_t * map, int* num_spaces){
     return toReturn;
 }
 
-person_t* insert_person(map_t* map, char c, char* name){ //The idea is to insert all possible position into a set and extract one randomly
+person_t* insert_person(map_t* map, char c, char* name, addr_t address){ //The idea is to insert all possible position into a set and extract one randomly
     set_t* indexes;
     int num_spaces = 0;
     int final_index = 0;
@@ -216,7 +218,7 @@ person_t* insert_person(map_t* map, char c, char* name){ //The idea is to insert
     sprintf(random_string, "%d", random_number); //Turn random number to string
     int* temp = set_find(indexes, random_string); //Finds that string in the set
     final_index = *temp; //Sets the index associated with that value
-    person_t* person = person_new(c, name); //Create a new person with name 'c' and name 'name'
+    person_t* person = person_new(c, name, address); //Create a new person with name 'c' and name 'name'
     person_setPos(person, final_index); //Set position in person struct
     map->players[final_index] = person; //Set position in map
     set_delete(indexes, namedelete); //Deletes set 
@@ -308,6 +310,47 @@ int get_rows(map_t * map){
 int get_columns(map_t* map){
     return map->columns;
 }
+
+char* grid_to_string(map_t* map) {
+    int total_size = (map->rows * (map->columns + 1)) + 1; // Including newlines and null terminator
+    char *to_return = (char *)malloc(total_size * sizeof(char));
+    if (!to_return) {
+        return NULL;
+    }
+    to_return[0] = '\0'; // Initialize to empty string
+
+    for(int index = 0; index < map->rows * map->columns; index++){
+        char to_append;
+        if(map->players[index] != NULL){
+            to_append = person_getLetter(map->players[index]);
+        }else{
+            to_append = spot_item(map->grid[index]);
+        }
+        if(index % map->columns -1 == 0){
+            strncat(to_return, "\n", 1);
+        }
+        strncat(to_return, &to_append, 1);
+    }
+    // for (int row = 0; row < map->rows; row++) {
+    //     for (int col = 0; col < map->columns; col++) {
+    //         char to_append = spot_item(map->grid[row * map->columns + col]);
+    //         strncat(to_return, &to_append, 1);
+    //     }
+    //     strncat(to_return, "\n", 1);
+    // }
+
+    // printf("%s", to_return);
+    return to_return;
+}
+
+void set_person(map_t* map, person_t* person){
+    if(person == NULL){
+        printf("The person us null \n");
+    }
+    printf("Yes if: %d \n", 0);
+    map->players[person_getPos(person)] = person_clone(person);
+}
+
 
 // void update_visibility(spot_t** grid, int reference){
 
