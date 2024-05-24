@@ -151,7 +151,7 @@ bool handle_message(void* arg, const addr_t from, const char* message) {
         } else {
             message_send(from, "GAME FULL");
         }
-    } else if (strncmp(message, "SPECTATE ", 9) == 0) {
+    } else if (strncmp(message, "SPECTATE", 8) == 0) {
         if (game->num_spectators != 0) {
             message_send(game->spectator_address, "QUIT");
         }
@@ -167,20 +167,21 @@ bool handle_message(void* arg, const addr_t from, const char* message) {
         if(sender == NULL){
             printf("the sender is nullagain \n");
         }
-        bool moved = move_person(game->map, sender, direction); // move this guy and clone the map for every person
-        if(!moved){
-            fprintf(stderr, "something went wrong in moving a person");
-            exit(1);
-        }
-        } else {
-            message_send(from, "INVALID PLAYER");
-        }
-        broadcast(game);
+        if(direction == 'Q'){ //Player quit: Destin you need to add functionality here
 
-        if(game->remaining_gold == 0){
-            // send the quit message to everyone and summary and then change everything
-            message_send(from, "QUIT");
-            return true;
         }
+        else{
+            while(move_person(game->map, sender, direction)){} // move this guy and clone the map for every person
+        }
+    } else {
+        message_send(from, "INVALID PLAYER");
+    }
+    broadcast(game);
+
+    if(game->remaining_gold == 0){
+        // send the quit message to everyone and summary and then change everything
+        message_send(from, "QUIT");
+        return true;
+    }
     return false; 
 }

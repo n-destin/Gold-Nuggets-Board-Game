@@ -19,6 +19,7 @@ static bool handleInput(void* arg);
 static bool handleMessage(void* arg, const addr_t from, const char* message);
 void spectate(char* serverHost, char* serverPort, addr_t serverAddress);
 void play(char* hostname, char* port, char* player_name, addr_t serverAddress);
+int is_key(char c);
 
 /* Main function to handle parsing args and initializing game/spectator modes.
 MODES:
@@ -51,11 +52,13 @@ int main(const int argc, char* argv[]) {
             fprintf(stderr, "can't form address from %s %s\n", serverHost, serverPort);
             exit(2); //
         }
-
+        printf("Re \n");
         // Check if server-messaging system initializes successfully
-        bool ok = message_loop(&server, 0, NULL, handleInput, handleMessage);
-        if (!ok) {fprintf(stderr, "Not ok"); exit(4);}
+        //bool ok = message_loop(&server, 0, NULL, handleInput, handleMessage);
+        //if (!ok) {fprintf(stderr, "Not ok"); exit(4);}
+        //message_done();
 
+        printf("H \n");
         // If no player_name, spectate
         if (argc == 3) {spectate(serverHost, serverPort, server);} 
         
@@ -80,11 +83,12 @@ int main(const int argc, char* argv[]) {
 void spectate(char* serverHost, char* serverPort, addr_t serverAddress) {
 
     // Tell the server we're spectating
-    const char* message = "SPECTATE";
+    char* message = "SPECTATE";
     message_send(serverAddress, message);
 
     // Start spectating
-    message_loop(&serverAddress, 0, NULL, handleInput, handleMessage);
+    bool ok = message_loop(&serverAddress, 0, NULL, handleInput, handleMessage);
+    if (!ok) {fprintf(stderr, "Not ok"); exit(4);}
     message_done();
 }
 
@@ -93,13 +97,21 @@ void spectate(char* serverHost, char* serverPort, addr_t serverAddress) {
 @outputs - messages recieved from server
 */
 void play(char* hostname, char* port, char* player_name, addr_t serverAddress) {
-
+    
     // Tell the server we're playing
-    const char* message = "PLAY";
+    char message[100] = "PLAY ";
+    if (sizeof(message) >= (5 + strlen(player_name) + 1)) {
+      strcat(message, player_name);
+    } else {
+      fprintf(stderr, "Destination buffer is not large enough.\n");
+      exit(1);
+    }
+    printf("%s", message);
     message_send(serverAddress, message);
 
     // Start playing
-    message_loop(&serverAddress, 0, NULL, handleInput, handleMessage);
+    bool ok = message_loop(&serverAddress, 0, NULL, handleInput, handleMessage);
+    if (!ok) {fprintf(stderr, "Not ok"); exit(4);}
     message_done();
 }
 
@@ -126,7 +138,7 @@ handleInput(void* arg)
     fprintf(stderr, "handleInput called without a correspondent.");
     return true;
   }
-  
+
   // allocate a buffer into which we can read a line of input
   // (it can't be any longer than a message)!
   char line[message_MaxBytes];
@@ -134,6 +146,8 @@ handleInput(void* arg)
   // read a line from stdin
   if (fgets(line, message_MaxBytes, stdin) == NULL) {
     // EOF case: stop looping
+    char* quitMessage = "KEY Q";
+    message_send(*serverp, quitMessage);
     return true;
   } else {
     // strip trailing newline
@@ -143,11 +157,24 @@ handleInput(void* arg)
     }
 
     // send as message to server
-    message_send(*serverp, line);
+    char key[6] = "KEY ";
+    if (len == 2) {
+      if (is_key(line[0])) {
+        size_t key_len = strlen(key);
+        key[key_len] = line[0];
+        key[key_len + 1] = '\0';
+        printf("Key: %s\n", key);
+        message_send(*serverp, key);
+      }
+    }
 
     // normal case: keep looping
     return false;
   }
+}
+
+int is_key(char c) {
+    return c == 'k' || c == 'h' || c == 'j' || c == 'l' || c == 'y' || c == 'u' || c == 'b' || c == 'n' || c == 'Q';
 }
 
 /**************** handleMessage ****************/
