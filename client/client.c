@@ -13,6 +13,8 @@ Handles clientside display and initialization
 #include "../map/person.h"
 #include "../support/message.h"
 #include "../support/log.h"
+#include <unistd.h>
+#include <sys/ioctl.h>
 
 // References to required functions
 static bool handleInput(void* arg);
@@ -21,6 +23,9 @@ void spectate(char* serverHost, char* serverPort, addr_t serverAddress);
 void play(char* hostname, char* port, char* player_name, addr_t serverAddress);
 int is_key(char c);
 
+char real_name;
+int NR;
+int NC;
 /* Main function to handle parsing args and initializing game/spectator modes.
 MODES:
 - Spectate if 2 arguments passed
@@ -34,6 +39,13 @@ EXITS:
 - 4 if message transmition module fails */
 int main(const int argc, char* argv[]) {
 
+    struct winsize w;
+    if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &w) == -1) {
+        perror("ioctl");
+        exit(EXIT_FAILURE);
+    }
+    NR =  w.ws_row;
+    NC = w.ws_col;
     // PARSE ARGS
     // Check arg count
     if (argc >= 3) {
@@ -187,22 +199,55 @@ handleMessage(void* arg, const addr_t from, const char* message)
 {
   printf("Client recieved: '%s'\n", message);
   if (strncmp(message, "OK", 2) == 0) {
-    //We are not ok
+    if (sscanf(message, "OK %c", &real_name) == 1) {
+    } else {
+      fprintf(stderr, "Failed to parse the message.\n");
+    }
   }
-  else if (strncmp(message, "GRID", 2) == 0){
-    //Check dimensions Sebastian!!!
+  else if (strncmp(message, "GRID", 4) == 0){
+    int gridRows = 0; 
+    int gridColumns = 0;
+    if (sscanf(message, "GRID %d %d", &gridRows, &gridColumns) == 2) {
+    } else {
+      fprintf(stderr, "Failed to parse the message.\n");
+    }
+
+    if(!(gridRows + 1 < NR && gridColumns + 1 < NC)){
+      fprintf(stdout, "Waiting for player to resize their grid");
+    }
   }
-  else if (strncmp(message, "GOLD", 2) == 0){
-    //Display gold Sebastian!
+  else if (strncmp(message, "GOLD", 4) == 0){
+    int n = 0; 
+    int p = 0;
+    int r = 0;
+    if (sscanf(message, "GOLD %d %d %d", &n, &p, &r) == 3) {
+    } else {
+      fprintf(stderr, "Failed to parse the message.\n");
+    }
+    fprintf(stdout, "Player %c has %d nuggets (%d nuggets unclaimed)", real_name, p, r); 
   }
-  else if (strncmp(message, "DISPLAY", 2) == 0){
-    //Do the display thingy according to the display rules 
+  else if (strncmp(message, "DISPLAY", 7) == 0){
+    fprintf(stdout, "%s", message);
   }
   else if (strncmp(message, "QUIT", 2) == 0){
-    //Make sure you Quit gracefully so not as usual
+    char reason[200];
+    memset(reason, 0, sizeof(reason));
+    if (sscanf(message, "QUIT %199[^\n]", reason) == 1) {
+      fprintf(stdout, "Reason: %s\n", reason);
+    } else {
+      fprintf(stderr, "Failed to parse the message.\n");
+    }
+    fflush(stdout);
+    exit(0);
   }
   else if (strncmp(message, "ERROR", 2) == 0){
-    //Print error message
+    char reason[200];
+    memset(reason, 0, sizeof(reason));
+    if (sscanf(message, "QUIT %199[^\n]", reason) == 1) {
+      fprintf(stdout, "Reason: %s\n", reason);
+    } else {
+      fprintf(stderr, "Failed to parse the message.\n");
+    }
   }
   fflush(stdout);
   return false;
