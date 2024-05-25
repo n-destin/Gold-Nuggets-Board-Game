@@ -185,7 +185,25 @@ int is_key(char c) {
 static bool
 handleMessage(void* arg, const addr_t from, const char* message)
 {
-  printf("'%s'\n", message);
+  printf("Client recieved: '%s'\n", message);
+  if (strncmp(message, "OK", 2) == 0) {
+    //We are not ok
+  }
+  else if (strncmp(message, "GRID", 2) == 0){
+    //Check dimensions Sebastian!!!
+  }
+  else if (strncmp(message, "GOLD", 2) == 0){
+    //Display gold Sebastian!
+  }
+  else if (strncmp(message, "DISPLAY", 2) == 0){
+    //Do the display thingy according to the display rules 
+  }
+  else if (strncmp(message, "QUIT", 2) == 0){
+    //Make sure you Quit gracefully so not as usual
+  }
+  else if (strncmp(message, "ERROR", 2) == 0){
+    //Print error message
+  }
   fflush(stdout);
   return false;
 }
