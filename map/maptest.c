@@ -21,17 +21,22 @@ int main(const int argc, char* argv[]) {
         person_t* b = insert_person(map, 'b', "someone", dummy);
         person_t* c = insert_person(map, 'c', "someone", dummy);
         person_t* d = insert_person(map, 'd', "someone", dummy);
+        person_t* e = insert_person(map, 'e', "someone", dummy);
+        person_t* f = insert_person(map, 'f', "someone", dummy);
+        person_t* g = insert_person(map, 'g', "someone", dummy);
+        person_t* h = insert_person(map, 'h', "someone", dummy);
         gold_initialize(map);
         map_print(map, stdout);
         
         move_person(map, a, 'h');
+        move_person(map, a, 'h');
+        move_person(map, a, 'h');
+        move_person(map, a, 'h');
         move_person(map, b, 'l');
-        move_person(map, c, 'j');
-        move_person(map, d, 'k');
-        move_person(map, a, 'y');
-        move_person(map, b, 'u');
-        move_person(map, c, 'b');
-        move_person(map, d, 'n');
+        move_person(map, b, 'l');
+        move_person(map, b, 'l');
+        move_person(map, c, 'h');
+        move_person(map, d, 'l');
         fprintf(stdout, "Person has: %d gold\n", person_getGold(a));
         fprintf(stdout, "Person has: %d gold\n", person_getGold(b));
         fprintf(stdout, "Person has: %d gold\n", person_getGold(c));

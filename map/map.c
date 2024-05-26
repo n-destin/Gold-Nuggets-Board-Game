@@ -190,9 +190,19 @@ bool move_person(map_t* map, person_t* person, char direction){
     }
     
     if(map->players[new_pos] != NULL){ //If there is a player in the way
-        char temp_name = person_getLetter(person); //Create temp
-        person_setName(person, person_getLetter(map->players[new_pos])); //Swap positions
-        person_setName(map->players[new_pos], temp_name); //Swap positions
+        //char temp_name = person_getLetter(person); //Create temp
+        //person_setName(person, person_getLetter(map->players[new_pos])); //Swap positions
+        //person_setName(map->players[new_pos], temp_name); //Swap positions
+        //printf("Swapped positions\n");
+        //printf("Moved %c to %d \n", person_getLetter(map->players[new_pos]), current_pos);
+        //printf("Moved %c to %d \n", person_getLetter(person), new_pos);
+        person_setPos(map->players[new_pos], current_pos);
+        person_setPos(person, new_pos);
+        
+        person_t *temp = map->players[new_pos];
+        map->players[new_pos] = person; 
+        map->players[current_pos] = temp;
+
     }
     else if(spot_item(map->grid[new_pos]) == '.' || spot_item(map->grid[new_pos]) == '#' || spot_item(map->grid[new_pos]) == '*'){ //Valid movment square
         person_setPos(person, new_pos);  //Move person
