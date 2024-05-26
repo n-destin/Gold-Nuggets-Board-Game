@@ -24,6 +24,7 @@ void spectate(char* serverHost, char* serverPort, addr_t serverAddress);
 void play(char* hostname, char* port, char* player_name, addr_t serverAddress);
 int is_key(char c);
 
+FILE* log = NULL;  
 char real_name;
 int NR;
 int NC;
@@ -53,6 +54,13 @@ int main(const int argc, char* argv[]) {
     NC = w.ws_col;
     // PARSE ARGS
     // Check arg count
+    
+    log = fopen("client.log", "w"); //Opens file
+    if (log == NULL) {
+        fprintf(stderr, "Error opening client.log");
+        exit(1);
+    }
+    flog_init(log);
     if (argc >= 3) {
 
         // Check if message module initializes successfully.
@@ -76,10 +84,18 @@ int main(const int argc, char* argv[]) {
         //message_done();
 
         // If no player_name, spectate
-        if (argc == 3) {spectate(serverHost, serverPort, server);} 
+        if (argc == 3) {
+          spectate(serverHost, serverPort, server);
+          flog_v(log, "User has chosen to spectate\n");
+        } 
+        
         
         // Otherwise, play
-        else if (argc == 4) {char* player_name = argv[3]; play(serverHost, serverPort, player_name, server);}
+        else if (argc == 4) {
+          char* player_name = argv[3];
+          play(serverHost, serverPort, player_name, server);
+          flog_v(log, "User has chosen to play\n");
+        }
 
         // If too many args
         else {fprintf(stderr, "Usage: ./client hostname port [playername]\n"); exit(1);}
@@ -101,7 +117,7 @@ void spectate(char* serverHost, char* serverPort, addr_t serverAddress) {
     // Tell the server we're spectating
     char* message = "SPECTATE";
     message_send(serverAddress, message);
-
+    flog_v(log, "Spectating initiated succesfully\n");
     // Start spectating
     bool ok = message_loop(&serverAddress, 0, NULL, handleInput, handleMessage);
     if (!ok) {fprintf(stderr, "Not ok"); exit(4);}
@@ -123,7 +139,7 @@ void play(char* hostname, char* port, char* player_name, addr_t serverAddress) {
       exit(1);
     }
     message_send(serverAddress, message);
-
+    flog_v(log, "Playing initiated succesfully\n");
     // Start playing
     bool ok = message_loop(&serverAddress, 0, NULL, handleInput, handleMessage);
     if (!ok) {fprintf(stderr, "Not ok"); exit(4);}
@@ -178,6 +194,9 @@ handleInput(void* arg)
         size_t key_len = strlen(key);
         key[key_len] = line[0];
         key[key_len + 1] = '\0';
+        char* log_message[200] = "User pressed ";
+        strcat(log_message, line[0]);
+        flog_v(log, log_message);
         message_send(*serverp, key);
       }
     }
@@ -207,7 +226,9 @@ handleMessage(void* arg, const addr_t from, const char* message)
   if (strncmp(message, "OK", 2) == 0) {
     if (sscanf(message, "OK %c", &real_name) == 1) {
     } else {
-      fprintf(stderr, "Failed to parse the message.\n");
+      char errorMessage[256];
+      snprintf(errorMessage, sizeof(errorMessage), "Failed to parse OK message: %s.\n", message);
+      flog_e(log, errorMessage);
     }
   }
   else if (strncmp(message, "GRID", 4) == 0){
@@ -215,7 +236,9 @@ handleMessage(void* arg, const addr_t from, const char* message)
     int gridColumns = 0;
     if (sscanf(message, "GRID %d %d", &gridRows, &gridColumns) == 2) {
     } else {
-      fprintf(stderr, "Failed to parse the message.\n");
+      char errorMessage[256];
+      snprintf(errorMessage, sizeof(errorMessage), "Failed to parse GRID message: %s.\n", message);
+      flog_e(log, errorMessage);
     }
 
     if(!(gridRows + 1 < NR && gridColumns + 1 < NC)){
@@ -226,13 +249,17 @@ handleMessage(void* arg, const addr_t from, const char* message)
     if(spectator){
       if (sscanf(message, "GOLD %d", &r) == 1) {
       } else {
-        fprintf(stderr, "Failed to parse the message.\n");
+        char errorMessage[256];
+        snprintf(errorMessage, sizeof(errorMessage), "Failed to parse GOLD message for spectator: %s.\n", message);
+        flog_e(log, errorMessage);
       }
     }
     else{
       if (sscanf(message, "GOLD %d %d %d", &n, &p, &r) == 3) {
       } else {
-        fprintf(stderr, "Failed to parse the message.\n");
+        char errorMessage[256];
+        snprintf(errorMessage, sizeof(errorMessage), "Failed to parse GOLD message for player: %s.\n", message);
+        flog_e(log, errorMessage);
       }
     }
   }
@@ -248,25 +275,32 @@ handleMessage(void* arg, const addr_t from, const char* message)
   else if (strncmp(message, "QUIT", 2) == 0){
     char reason[200];
     memset(reason, 0, sizeof(reason));
-    if (sscanf(message, "QUIT %199[^\n]", reason) == 1) {
+    if (sscanf(message, "QUIT %180[^\n]", reason) == 1) {
       fprintf(stdout, "%s\n", reason);
     } else {
-      fprintf(stderr, "Failed to parse the message.\n");
+      char errorMessage[256];
+      snprintf(errorMessage, sizeof(errorMessage), "Failed to parse QUIT message: %s.\n", message);
+      flog_e(log, errorMessage);
     }
     fflush(stdout);
+    flog_done(log);
+    fclose(log);
     exit(0);
   }
   else if (strncmp(message, "ERROR", 2) == 0){
     char reason[200];
     memset(reason, 0, sizeof(reason));
-    if (sscanf(message, "QUIT %199[^\n]", reason) == 1) {
+    if (sscanf(message, "ERROR %180[^\n]", reason) == 1) {
       fprintf(stdout, "%s\n", reason);
     } else {
-      fprintf(stderr, "Failed to parse the message.\n");
+      char errorMessage[256];
+      snprintf(errorMessage, sizeof(errorMessage), "Failed to parse ERROR message for spectator: %s.\n", message);
+      flog_e(log, errorMessage);
     }
   }
   else{
     fprintf(stderr, "Logged: '%s'\n", message);
+    flog_e(log, message);
   }
   fflush(stdout);
   return false;

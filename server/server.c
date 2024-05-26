@@ -74,7 +74,7 @@ void handle_client_messages() {
 }
 
 void send_summary_and_quit(game_t * game) {
-    printf("Game over, sending summary and quitting\n");
+    fprintf(stderr, "Game over, sending summary and quitting\n");
     char summary[1024] = "QUIT GAME OVER:\n";
     person_t** players = get_players(game->map);
     for (int i = 0; i < (get_rows(game->map) * get_columns(game->map)); i++) {
@@ -177,6 +177,7 @@ bool handle_message(void* arg, const addr_t from, const char* message) {
             message_send(from, gridMessage);
             if(new_player == NULL){
                 fprintf(stderr, "Something went wrong when inserting a player");
+                exit(1);
             }
             char response[256];
             sprintf(response, "OK %c\n", character);
@@ -195,7 +196,8 @@ bool handle_message(void* arg, const addr_t from, const char* message) {
     } else if (strncmp(message, "KEY ", 4) == 0) {
         char direction = message[4]; 
         if(sender == NULL){
-            fprintf(stderr, "The sender is nullagain \n");
+            fprintf(stderr, "The sender is NULL\n");
+            exit(1);
         }
         if(direction == 'Q'){ 
             if (message_eqAddr(from, game->spectator_address)){
