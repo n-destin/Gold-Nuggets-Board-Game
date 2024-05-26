@@ -34,8 +34,8 @@ person_t* person_new(char c, char* name, addr_t address){
     return person;
 }
 
-void person_addGold(person_t* person){
-    person->gold = person->gold + 1;
+void person_addGold(person_t* person, int gold){
+    person->gold = person->gold + gold;
 }
 
 addr_t person_getAddr(person_t* person){

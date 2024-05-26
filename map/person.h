@@ -27,7 +27,7 @@ person_t* person_new(char c, char* name, addr_t address);
 /*
 * Adds 1 gold to person's count
 */
-void person_addGold(person_t* person);
+void person_addGold(person_t* person, int gold);
 
 /**************** person_getGold ****************/
 /*

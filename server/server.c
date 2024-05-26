@@ -8,6 +8,7 @@
 #include "../map/person.h"
 #include "../libcs50/hashtable.h"
 #include "../libcs50/file.h"
+#include <ctype.h>
 
 #define MaxNameLength 50   // max number of chars in playerName
 #define MaxPlayers 26      // maximum number of players
@@ -35,6 +36,7 @@ void handle_client_messages();
 void send_summary_and_quit();
 bool handle_message(void* arg, const addr_t from, const char* message);
 void setup_network();
+static int contains_non_space(const char *str);
 
 int main(int argc, char *argv[]) {
     if (argc < 2 || argc > 3) {
@@ -91,18 +93,27 @@ void send_summary_and_quit(game_t * game) {
 
 void broadcast(game_t* game)
 {
+    char* string_map = grid_to_string(game->map);
     person_t** players = get_players(game->map);
     for(int index = 0; index < (get_rows(game->map) * get_columns(game->map)); index++){
         person_t * person = players[index];
         if (person != NULL){
-            char* string_map = grid_to_string(game->map);
+            char send_gold[50];
             char send_display[strlen(string_map) + 10];
-            char send_grid[50];
             sprintf(send_display, "DISPLAY\n%s", string_map);
-            sprintf(send_grid, "GRID %d %d %d ", 0, person_getGold(person), game->remaining_gold);
-            message_send(person_getAddr(person), send_grid);
+            sprintf(send_gold, "GOLD %d %d %d ", 0, person_getGold(person), game->remaining_gold);
+            message_send(person_getAddr(person), send_gold);
             message_send(person_getAddr(person), send_display);
         }
+    }
+    addr_t noAdress = message_noAddr();
+    if(!message_eqAddr(game->spectator_address, noAdress)){
+        char send_gold_spectator[50];
+        char send_display_spectator[strlen(string_map) + 10];
+        sprintf(send_display_spectator, "DISPLAY\n%s", string_map);
+        sprintf(send_gold_spectator, "GOLD %d", game->remaining_gold);
+        message_send(game->spectator_address, send_gold_spectator);
+        message_send(game->spectator_address, send_display_spectator);
     }
 }
 
@@ -130,6 +141,15 @@ person_t* find_sender(addr_t from, game_t* game){
     return NULL;
 }
 
+static int contains_non_space(const char *str) {
+    while (*str) {
+        if (!isspace((unsigned char)*str)) {
+            return 1; 
+        }
+        str++;
+    }
+    return 0; 
+}
 
 bool handle_message(void* arg, const addr_t from, const char* message) {
     game_t* game = (game_t*)arg; // change state -> game. consistency in naming
@@ -139,9 +159,16 @@ bool handle_message(void* arg, const addr_t from, const char* message) {
             char name[25];
             char character = 'A' + game->num_players; // getting a chracters
             strncpy(name, message + 5, MaxNameLength - 1); 
+            if(!contains_non_space(name)){
+                message_send(from, "QUIT Sorry - you must provide player's name.");
+            }
             person_t* new_player = insert_person(game->map, character, name, from);
+            char gridMessage[100]; 
+
+            sprintf(gridMessage, "GRID %d %d", get_rows(game->map), get_columns(game->map));
+            message_send(from, gridMessage);
             if(new_player == NULL){
-                fprintf(stderr, "something went wrong when inserting a player");
+                fprintf(stderr, "Something went wrong when inserting a player");
             }
             char response[256];
             sprintf(response, "OK %c\n", character);
@@ -149,29 +176,35 @@ bool handle_message(void* arg, const addr_t from, const char* message) {
             game->num_players++;
 
         } else {
-            message_send(from, "GAME FULL");
+            message_send(from, "QUIT Game is full: no more players can join.");
         }
     } else if (strncmp(message, "SPECTATE", 8) == 0) {
         if (game->num_spectators != 0) {
-            message_send(game->spectator_address, "QUIT");
+            message_send(game->spectator_address, "QUIT You have been replaced by a new spectator.");
         }
         game->spectator_address = from;
-        char response[256];
-        sprintf(response, "WELCOME SPECTATOR\n");
-        message_send(from, response);
-        message_send(from, grid_to_string(game->map));
+        game->num_spectators = 1;
     } else if (strncmp(message, "KEY ", 4) == 0) {
-        printf("I reached in movements \n");
-        printf("message: %s \n", message);
         char direction = message[4]; 
         if(sender == NULL){
-            printf("the sender is nullagain \n");
+            fprintf(stderr, "The sender is nullagain \n");
         }
-        if(direction == 'Q'){ //Player quit: Destin you need to add functionality here
-
+        if(direction == 'Q'){ 
+            if (message_eqAddr(from, game->spectator_address)){
+                message_send(from, "QUIT Thanks for watching!");
+                game->num_spectators = 0;
+            }else{
+                message_send(from, "QUIT Thanks for playing!");
+            } 
         }
         else{
-            while(move_person(game->map, sender, direction)){} // move this guy and clone the map for every person
+            if(isupper((unsigned char)direction)){
+                direction = tolower(direction);
+                while(move_person(game->map, sender, direction)){}
+            }
+            else{
+                move_person(game->map, sender, direction);
+            }
         }
     } else {
         message_send(from, "INVALID PLAYER");
@@ -180,7 +213,7 @@ bool handle_message(void* arg, const addr_t from, const char* message) {
 
     if(game->remaining_gold == 0){
         // send the quit message to everyone and summary and then change everything
-        message_send(from, "QUIT");
+        send_summary_and_quit(game);
         return true;
     }
     return false; 

@@ -199,7 +199,9 @@ bool move_person(map_t* map, person_t* person, char direction){
         map->players[current_pos] = NULL; 
         map->players[new_pos] = person;
         if(spot_item(map->grid[new_pos]) == '*'){ //Found gold
-            person_addGold(person); //Add gold to player count
+            int gold = spot_get_gold(map->grid[new_pos]);
+            fprintf(stdout, "Gold on this spot was: %d", gold);
+            person_addGold(person, gold); //Add gold to player count
             spot_insert(map->grid[new_pos], '.'); //Inserts '.' in its place 
         }
     }

@@ -15,6 +15,7 @@ Handles clientside display and initialization
 #include "../support/log.h"
 #include <unistd.h>
 #include <sys/ioctl.h>
+#include <ctype.h>
 
 // References to required functions
 static bool handleInput(void* arg);
@@ -26,6 +27,10 @@ int is_key(char c);
 char real_name;
 int NR;
 int NC;
+int n = 0; 
+int p = 0;
+int r = 0;
+bool spectator = false; 
 /* Main function to handle parsing args and initializing game/spectator modes.
 MODES:
 - Spectate if 2 arguments passed
@@ -64,13 +69,12 @@ int main(const int argc, char* argv[]) {
             fprintf(stderr, "can't form address from %s %s\n", serverHost, serverPort);
             exit(2); //
         }
-        printf("Re \n");
+
         // Check if server-messaging system initializes successfully
         //bool ok = message_loop(&server, 0, NULL, handleInput, handleMessage);
         //if (!ok) {fprintf(stderr, "Not ok"); exit(4);}
         //message_done();
 
-        printf("H \n");
         // If no player_name, spectate
         if (argc == 3) {spectate(serverHost, serverPort, server);} 
         
@@ -93,7 +97,7 @@ int main(const int argc, char* argv[]) {
 @outputs - messages recieved from server
 */
 void spectate(char* serverHost, char* serverPort, addr_t serverAddress) {
-
+    spectator = true;
     // Tell the server we're spectating
     char* message = "SPECTATE";
     message_send(serverAddress, message);
@@ -118,7 +122,6 @@ void play(char* hostname, char* port, char* player_name, addr_t serverAddress) {
       fprintf(stderr, "Destination buffer is not large enough.\n");
       exit(1);
     }
-    printf("%s", message);
     message_send(serverAddress, message);
 
     // Start playing
@@ -175,7 +178,6 @@ handleInput(void* arg)
         size_t key_len = strlen(key);
         key[key_len] = line[0];
         key[key_len + 1] = '\0';
-        printf("Key: %s\n", key);
         message_send(*serverp, key);
       }
     }
@@ -185,8 +187,9 @@ handleInput(void* arg)
   }
 }
 
-int is_key(char c) {
-    return c == 'k' || c == 'h' || c == 'j' || c == 'l' || c == 'y' || c == 'u' || c == 'b' || c == 'n' || c == 'Q';
+int is_key(char input) {
+  char c = tolower(input);
+  return c == 'k' || c == 'h' || c == 'j' || c == 'l' || c == 'y' || c == 'u' || c == 'b' || c == 'n' || input == 'Q';
 }
 
 /**************** handleMessage ****************/
@@ -197,7 +200,7 @@ int is_key(char c) {
 static bool
 handleMessage(void* arg, const addr_t from, const char* message)
 {
-  printf("Client recieved: '%s'\n", message);
+  //printf("Client recieved: '%s'\n", message);
   if (strncmp(message, "OK", 2) == 0) {
     if (sscanf(message, "OK %c", &real_name) == 1) {
     } else {
@@ -217,23 +220,33 @@ handleMessage(void* arg, const addr_t from, const char* message)
     }
   }
   else if (strncmp(message, "GOLD", 4) == 0){
-    int n = 0; 
-    int p = 0;
-    int r = 0;
-    if (sscanf(message, "GOLD %d %d %d", &n, &p, &r) == 3) {
-    } else {
-      fprintf(stderr, "Failed to parse the message.\n");
+    if(spectator){
+      if (sscanf(message, "GOLD %d", &r) == 1) {
+      } else {
+        fprintf(stderr, "Failed to parse the message.\n");
+      }
     }
-    fprintf(stdout, "Player %c has %d nuggets (%d nuggets unclaimed)", real_name, p, r); 
+    else{
+      if (sscanf(message, "GOLD %d %d %d", &n, &p, &r) == 3) {
+      } else {
+        fprintf(stderr, "Failed to parse the message.\n");
+      }
+    }
   }
   else if (strncmp(message, "DISPLAY", 7) == 0){
-    fprintf(stdout, "%s", message);
+    if(spectator){
+      fprintf(stdout, "Spectator: %d nuggets unclaimed", r); 
+    }
+    else{
+      fprintf(stdout, "Player %c has %d nuggets (%d nuggets unclaimed)", real_name, p, r); 
+    }
+    fprintf(stdout, "%s", message + 8);
   }
   else if (strncmp(message, "QUIT", 2) == 0){
     char reason[200];
     memset(reason, 0, sizeof(reason));
     if (sscanf(message, "QUIT %199[^\n]", reason) == 1) {
-      fprintf(stdout, "Reason: %s\n", reason);
+      fprintf(stdout, "%s\n", reason);
     } else {
       fprintf(stderr, "Failed to parse the message.\n");
     }
@@ -244,10 +257,13 @@ handleMessage(void* arg, const addr_t from, const char* message)
     char reason[200];
     memset(reason, 0, sizeof(reason));
     if (sscanf(message, "QUIT %199[^\n]", reason) == 1) {
-      fprintf(stdout, "Reason: %s\n", reason);
+      fprintf(stdout, "%s\n", reason);
     } else {
       fprintf(stderr, "Failed to parse the message.\n");
     }
+  }
+  else{
+    fprintf(stderr, "Logged: '%s'\n", message);
   }
   fflush(stdout);
   return false;
