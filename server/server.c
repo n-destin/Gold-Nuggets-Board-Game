@@ -54,7 +54,6 @@ int main(int argc, char *argv[]) {
     initialize_game(map_filepathname);
     setup_network(game);
     handle_client_messages();
-    // send_summary_and_quit(game);
     return 0;
 }
 
@@ -74,7 +73,6 @@ void handle_client_messages() {
 }
 
 void send_summary_and_quit(game_t * game) {
-    fprintf(stderr, "Game over, sending summary and quitting\n");
     char summary[1024] = "QUIT GAME OVER:\n";
     person_t** players = get_players(game->map);
     for (int i = 0; i < (get_rows(game->map) * get_columns(game->map)); i++) {
@@ -217,7 +215,7 @@ bool handle_message(void* arg, const addr_t from, const char* message) {
             }
         }
     } else {
-        message_send(from, "INVALID PLAYER");
+        fprintf(stderr, "Logged '%s.\n", message);
     }
     broadcast(game);
 
