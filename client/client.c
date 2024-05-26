@@ -189,6 +189,9 @@ handleInput(void* arg)
 
 int is_key(char input) {
   char c = tolower(input);
+  if(spectator){
+    return input == 'Q';
+  }
   return c == 'k' || c == 'h' || c == 'j' || c == 'l' || c == 'y' || c == 'u' || c == 'b' || c == 'n' || input == 'Q';
 }
 

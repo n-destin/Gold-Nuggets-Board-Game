@@ -95,6 +95,14 @@ void broadcast(game_t* game)
 {
     char* string_map = grid_to_string(game->map);
     person_t** players = get_players(game->map);
+    int gold_collected = 0;
+    for(int index = 0; index < (get_rows(game->map) * get_columns(game->map)); index++){
+        person_t * person = players[index];
+        if (person != NULL){
+            gold_collected += person_getGold(person);
+        }
+    }
+    game->remaining_gold = 250 - gold_collected;
     for(int index = 0; index < (get_rows(game->map) * get_columns(game->map)); index++){
         person_t * person = players[index];
         if (person != NULL){
