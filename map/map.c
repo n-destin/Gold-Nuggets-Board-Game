@@ -108,7 +108,7 @@ void map_print(map_t* map, FILE* out){
                 fprintf(out, "%c", person_getLetter(person)); //Print player (all players are visible but could be changed)
             }else{
                 spot_t* spot = map->grid[column + (row*map->columns)]; //Get the spot
-                if(get_visibility(spot)){ //Check spot visibility
+                if(!get_visibility(spot)){ //Check spot visibility
                     // modify this to account for visible gold.
                     fprintf(out, "%c", spot_item(spot));
                 }
@@ -200,7 +200,7 @@ bool move_person(map_t* map, person_t* person, char direction){
         map->players[new_pos] = person;
         if(spot_item(map->grid[new_pos]) == '*'){ //Found gold
             int gold = spot_get_gold(map->grid[new_pos]);
-            fprintf(stdout, "Gold on this spot was: %d", gold);
+            fprintf(stdout, "Gold on this spot was: %d\n", gold);
             person_addGold(person, gold); //Add gold to player count
             spot_insert(map->grid[new_pos], '.'); //Inserts '.' in its place 
         }
@@ -236,7 +236,6 @@ person_t* insert_person(map_t* map, char c, char* name, addr_t address){ //The i
     int num_spaces = 0;
     int final_index = 0;
     indexes = get_freeSpace(map, &num_spaces);
-    printf("Here: %d", num_spaces);
     if(num_spaces == 0){
         return NULL;
     }

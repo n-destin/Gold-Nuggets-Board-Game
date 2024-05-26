@@ -6,7 +6,7 @@
 L = ../libcs50
 
 
-OBJS = map.o spot.o person.o
+OBJS = maptest.o map.o spot.o person.o
 LLIBS = $L/libcs50-given.a ../support/support.a
 LIBS = -lm
 
