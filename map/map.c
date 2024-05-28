@@ -268,11 +268,30 @@ void namedelete(void* item) //Deletes a name as helper function for hashtable
   }
 }
 
-void gold_initialize(map_t* map){
-    
-
-    
+void gold_initialize(map_t* map)
+{
+    int compare_gold = 0;
+    int random_piles = rand() % (GoldMaxNumPiles + 1 - GoldMinNumPiles) + GoldMinNumPiles;
+    int gold_remaining = GoldTotal - random_piles; // each pile must have at least one gold
+    for(int pile = 0; pile<random_piles; pile++){
+        int space_count = 0;
+        int random_gold = rand() % gold_remaining;
+        if(pile == random_piles - 1){
+            random_gold = gold_remaining;
+        }
+        set_t* indices = get_freeSpace(map, &space_count); // get the free spaces
+        int random_index = rand() % space_count;
+        gold_remaining -= random_gold;
+        char random_number_string[20];
+        sprintf(random_number_string, "%d", random_index);
+        int* position = set_find(indices, random_number_string);
+        spot_t * spot = map->grid[*position];
+        spot_add_gold(spot, random_gold + 1);
+        compare_gold += random_gold + 1;
+        spot_set_item(spot, '*');
+    }
 }
+
 
 
 // clone the current map. To be called whenever inserting a new player

@@ -16,6 +16,8 @@ Handles clientside display and initialization
 #include <unistd.h>
 #include <sys/ioctl.h>
 #include <ctype.h>
+#include <ncurses.h>
+#include <curses.h>
 
 // References to required functions
 static bool handleInput(void* arg);
@@ -23,7 +25,9 @@ static bool handleMessage(void* arg, const addr_t from, const char* message);
 void spectate(char* serverHost, char* serverPort, addr_t serverAddress);
 void play(char* hostname, char* port, char* player_name, addr_t serverAddress);
 int is_key(char c);
+static void init_curses(void);
 
+WINDOW *inputwin;
 FILE* log_file;  
 char real_name;
 int NR;
@@ -68,6 +72,7 @@ int main(const int argc, char* argv[]) {
             exit (3);
         }
 
+
         char* serverHost = argv[1];
         char* serverPort = argv[2];
         addr_t server; // IP addr of server
@@ -86,13 +91,16 @@ int main(const int argc, char* argv[]) {
         //bool ok = message_loop(&server, 0, NULL, handleInput, handleMessage);
         //if (!ok) {fprintf(stderr, "Not ok"); exit(4);}
         //message_done();
+        
+        // Open our window
+        init_curses();
+        // fill_curses();
 
         // If no player_name, spectate
         if (argc == 3) {
           spectate(serverHost, serverPort, server);
           flog_v(log_file, "User has chosen to spectate\n");
-        } 
-        
+        }
         
         // Otherwise, play
         else if (argc == 4) {
@@ -109,7 +117,8 @@ int main(const int argc, char* argv[]) {
     else {fprintf(stderr, "Usage: ./client hostname port [playername]\n"); exit(1);}
 
     // If all goes well
-    exit(0);
+    message_done(); // Close messaging communication
+    exit(0); // Exit with no errors
 }
 
 /* Spectate function to tell server to setup client as a spectator, doesn't allow game interaction
@@ -122,6 +131,35 @@ void spectate(char* serverHost, char* serverPort, addr_t serverAddress) {
     char* message = "SPECTATE";
     message_send(serverAddress, message);
     flog_v(log_file, "Spectating initiated succesfully\n");
+    
+    char str[80];
+    int ch, i = 0;
+    while ((ch = wgetch(inputwin)) != '\n') {
+        // Handle backspace
+        if (ch == KEY_BACKSPACE || ch == 127) {
+            if (i > 0) {
+                i--;
+                mvwdelch(inputwin, 0, i);
+            }
+        } else {
+            // Add character to the buffer
+            str[i] = ch;
+            i++;
+            // Display character on the screen
+            waddch(inputwin, ch);
+        }
+        wrefresh(inputwin);
+    }
+
+    // Null-terminate the string
+    str[i] = '\0';
+
+    // Clear the input window
+    werase(inputwin);
+    wrefresh(inputwin);
+
+    // Display the entered text
+    mvprintw(2, 0, "You entered: %s", str);
     // Start spectating
     bool ok = message_loop(&serverAddress, 0, NULL, handleInput, handleMessage);
     if (!ok) {fprintf(stderr, "Not ok"); exit(4);}
@@ -176,34 +214,31 @@ handleInput(void* arg)
 
   // allocate a buffer into which we can read a line of input
   // (it can't be any longer than a message)!
-  char line[message_MaxBytes];
-
+  int ch = wgetch(inputwin);
   // read a line from stdin
-  if (fgets(line, message_MaxBytes, stdin) == NULL) {
+  if (ch == '\0') {
     // EOF case: stop looping
     char* quitMessage = "KEY Q";
     message_send(*serverp, quitMessage);
     return true;
+
   } else {
     // strip trailing newline
-    const int len = strlen(line);
-    if (len > 0 && line[len-1] == '\n') {
-      line[len-1] = '\0';
-    }
 
-    // send as message to server
     char key[6] = "KEY ";
-    if (len == 2) {
-      if (is_key(line[0])) {
-        size_t key_len = strlen(key);
-        key[key_len] = line[0];
-        key[key_len + 1] = '\0';
-        char log_message[20];
-        snprintf(log_message, sizeof(log_message), "User pressed: %c\n", line[0]);
-        flog_v(log_file, log_message);
-        message_send(*serverp, key);
-      }
+    size_t key_len = strlen(key);
+    key[key_len] = ch;
+    key[key_len + 1] = '\0';
+    
+    // Log and send the key if it is valid
+    if (is_key(ch)) {
+      char log_message[20];
+      snprintf(log_message, sizeof(log_message), "User pressed: %c\n", ch);
+      // Assuming flog_v is a logging function
+      flog_v(log_file, log_message);
+      message_send(*serverp, key);
     }
+    
 
     // normal case: keep looping
     return false;
@@ -236,19 +271,33 @@ handleMessage(void* arg, const addr_t from, const char* message)
     }
   }
   else if (strncmp(message, "GRID", 4) == 0){
-    int gridRows = 0; 
-    int gridColumns = 0;
-    if (sscanf(message, "GRID %d %d", &gridRows, &gridColumns) == 2) {
+    int gridrows = 0; 
+    int gridcolumns = 0;
+    if (sscanf(message, "GRID %d %d", &gridrows, &gridcolumns) == 2) {
     } else {
       char errorMessage[256];
       snprintf(errorMessage, sizeof(errorMessage), "Failed to parse GRID message: %s.\n", message);
       flog_e(log_file, errorMessage);
     }
+    
+    // Get grid window of right size, loop until.
+    while (NR + 1 < gridrows || NC + 1 < gridcolumns) {
+      
+      clear();
+      
+      // Tell the player & log message to resize
+      mvprintw(0, 0, "Waiting for player to resize their grid");
+      flog_v(log_file, "Waiting for player to resize their grid");
+      
+      // Update Window
+      refresh();
 
-    if(!(gridRows + 1 < NR && gridColumns + 1 < NC)){
-      fprintf(stdout, "Waiting for player to resize their grid");
-    }
+      // Check if resizing occured
+        int ch = getch();
+        if (ch == KEY_RESIZE) {getmaxyx(stdscr, NR, NC);}
+      }
   }
+
   else if (strncmp(message, "GOLD", 4) == 0){
     if(spectator){
       if (sscanf(message, "GOLD %d", &r) == 1) {
@@ -268,25 +317,33 @@ handleMessage(void* arg, const addr_t from, const char* message)
     }
   }
   else if (strncmp(message, "DISPLAY", 7) == 0){
+    
     if(spectator){
-      fprintf(stdout, "Spectator: %d nuggets unclaimed", r); 
+    mvprintw(0, 1, "Spectator: %d nuggets unclaimed", r); 
+    refresh();
     }
+    
     else{
-      fprintf(stdout, "Player %c has %d nuggets (%d nuggets unclaimed)", real_name, p, r); 
+      mvprintw(0, 1, "Player %c has %d nuggets (%d nuggets unclaimed)", real_name, p, r);
+      refresh();
     }
-    fprintf(stdout, "%s", message + 8);
+    mvprintw(1, NC/2, "%s", message + 8); 
+    refresh();
   }
   else if (strncmp(message, "QUIT", 2) == 0){
     char reason[200];
     memset(reason, 0, sizeof(reason));
     if (sscanf(message, "QUIT %180[^\n]", reason) == 1) {
-      fprintf(stdout, "%s\n", reason);
+      clear();
+      mvprintw(0, 1, "%s\n", reason);
+      refresh();
     } else {
       char errorMessage[256];
       snprintf(errorMessage, sizeof(errorMessage), "Failed to parse QUIT message: %s.\n", message);
       flog_e(log_file, errorMessage);
     }
     fflush(stdout);
+    endwin(); // Close window
     flog_v(log_file, "Exiting program sucessfully");
     flog_done(log_file);
     fclose(log_file);
@@ -296,7 +353,7 @@ handleMessage(void* arg, const addr_t from, const char* message)
     char reason[200];
     memset(reason, 0, sizeof(reason));
     if (sscanf(message, "ERROR %180[^\n]", reason) == 1) {
-      fprintf(stdout, "%s\n", reason);
+      flog_e(stdout, message);
     } else {
       char errorMessage[256];
       snprintf(errorMessage, sizeof(errorMessage), "Failed to parse ERROR message for spectator: %s.\n", message);
@@ -310,4 +367,33 @@ handleMessage(void* arg, const addr_t from, const char* message)
   }
   fflush(stdout);
   return false;
+}
+
+
+/* Function to start up curses window for game display
+@inputs - NONE
+@outputs - Displays curses window */
+static void init_curses(void) {
+  initscr();            // Start curses mode
+  noecho();             // Don't echo while we do getch
+  cbreak();             // Disable line buffering
+  keypad(stdscr, TRUE); // Enable special keys capturing (like KEY_RESIZE)
+
+    // Create the input window
+  int starty = 1;       // Position: one line below the top of the screen
+  int startx = 0;       // Start at the beginning of the line
+  int width = COLS;     // Width spans the entire screen width
+  inputwin = newwin(1, width, starty, startx);
+  wrefresh(inputwin);
+
+    // Set our screen size
+  getmaxyx(stdscr, NR, NC);
+
+    // Visuals
+  curs_set(0); // Don't show user cursor
+
+    // Colors
+  start_color();
+  init_pair(2, COLOR_BLUE, COLOR_BLACK); // Color pair for background/text
+  attron(COLOR_PAIR(2));
 }

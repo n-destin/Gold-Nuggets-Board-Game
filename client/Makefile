@@ -17,7 +17,7 @@ MAKE = make
 VALGRIND = valgrind --leak-check=full --show-leak-kinds=all
 
 client: $(OBJS) $(LLIBS)
-	$(CC) $(CFLAGS) $(OBJS) $(LLIBS) $(LIBS) -o $@
+	$(CC) $(CFLAGS) $(OBJS) $(LLIBS) $(LIBS) -lcurses -o $@ 
 
 client.o: client.h
 
