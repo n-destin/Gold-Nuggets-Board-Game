@@ -1,5 +1,5 @@
 OBJS = server.o
-LLIBS = ../support/support.a ../map/map.a
+LLIBS = ../support/support.a ../map/map.a 
 LIBS = -lm -L../libcs50 -lcs50-given
 
 CFLAGS = -Wall -pedantic -std=c11 -ggdb -I. -I../libcs50
@@ -15,7 +15,7 @@ server: $(OBJS) $(LLIBS)
 server.o: server.h
 
 test: server
-		./server ../maps/main.txt
+		./server ../maps/small.txt
 
 valgrind: server
 		$(VALGRIND) ./server ../maps/main.txt

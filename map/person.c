@@ -16,17 +16,23 @@ typedef struct person{// Person has a name, position, and a quantity of gold
     char letter;
     int pos;
     int gold;
+    int* visible;
     char name[MaxNameLength];
     addr_t address;
 } person_t;
 
-person_t* person_new(char c, char* name, addr_t address){
+person_t* person_new(char c, char* name, addr_t address, int max_position){
     person_t* person = malloc(sizeof(person_t));
     // char port_string[16];
     if (person == NULL) { //Checks for memory allocation
         fprintf(stderr, "Memory allocation error");
         exit(1);          
-    } 
+    }
+    person->visible = (int*) malloc(sizeof(int) * max_position);
+    for (int i = 0; i < max_position; i++) {
+        person->visible[i] = 0;
+    }
+
     person->letter = c;
     person->address = address;
     strcpy(person->name, name);
@@ -96,4 +102,13 @@ person_t* person_clone( person_t* original) {
     clone->address = original->address; // Assuming addr_t can be copied directly
 
     return clone;
+}
+
+
+int* get_visible(person_t* person){
+    return person->visible;
+}
+
+void update_visible_array(person_t* person, int index){
+    person->visible[index] = 1;
 }

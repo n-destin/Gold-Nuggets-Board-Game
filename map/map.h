@@ -12,6 +12,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include "person.h"
+#include "spot.h"
 
 /**************** global types ****************/
 typedef struct map map_t;
@@ -87,6 +88,10 @@ int get_rows(map_t * map);
 
 int get_columns(map_t* map);
 
-char* grid_to_string(map_t* map);
+char* grid_to_string_player(map_t* map, char letter);
+
+char* grid_to_string_spectator(map_t* map);
 
 void set_person(map_t* map, person_t* person);
+
+spot_t** get_grid(map_t* map);

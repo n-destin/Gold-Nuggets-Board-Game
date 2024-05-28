@@ -8,6 +8,7 @@
 #include "../map/person.h"
 #include "../libcs50/hashtable.h"
 #include "../libcs50/file.h"
+#include "../map/visibility.h"
 #include <ctype.h>
 
 #define MaxNameLength 50   // max number of chars in playerName
@@ -68,7 +69,7 @@ void initialize_game(char* file_pathname) {
 }
 
 void handle_client_messages() {
-    printf("Handling client messages\n");
+    fprintf(stderr, "Handling client messages\n");
     message_loop(&game, 0, NULL, NULL, handle_message);
 }
 
@@ -91,12 +92,15 @@ void send_summary_and_quit(game_t * game) {
 
 void broadcast(game_t* game)
 {
-    char* string_map = grid_to_string(game->map);
+    char* string_map = NULL;
     person_t** players = get_players(game->map);
     int gold_collected = 0;
+    printf("here1\n");
     for(int index = 0; index < (get_rows(game->map) * get_columns(game->map)); index++){
         person_t * person = players[index];
         if (person != NULL){
+            visibility(person, game->map);
+            string_map = grid_to_string_player(game->map, person_getLetter(person));
             gold_collected += person_getGold(person);
         }
     }
@@ -116,6 +120,7 @@ void broadcast(game_t* game)
     if(!message_eqAddr(game->spectator_address, noAdress)){
         char send_gold_spectator[50];
         char send_display_spectator[strlen(string_map) + 10];
+        string_map = grid_to_string_spectator(game->map);
         sprintf(send_display_spectator, "DISPLAY\n%s", string_map);
         sprintf(send_gold_spectator, "GOLD %d", game->remaining_gold);
         message_send(game->spectator_address, send_gold_spectator);
@@ -174,7 +179,7 @@ bool handle_message(void* arg, const addr_t from, const char* message) {
             sprintf(gridMessage, "GRID %d %d", get_rows(game->map), get_columns(game->map));
             message_send(from, gridMessage);
             if(new_player == NULL){
-                fprintf(stderr, "Something went wrong when inserting a player");
+                fprintf(stderr, "Something went wrong when insertfing a player");
                 exit(1);
             }
             char response[256];

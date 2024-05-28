@@ -9,6 +9,7 @@ typedef struct spot{ //Contains item, person, and a visibility
     char item;
     char person; // the person on the slot
     bool visible;
+    bool invisibleGold;
     int gold;
 } spot_t;
 
@@ -19,6 +20,7 @@ spot_t* spot_new(){
         exit(1);          
     } 
     spot->gold = 0;
+    spot->invisibleGold = false;
     spot->visible = false;
     return spot;
 }
@@ -73,4 +75,11 @@ void spot_add_gold(spot_t* spot, int gold){
 
 int spot_get_gold(spot_t* spot){
     return spot->gold;
+}
+
+bool spot_invisible_gold(spot_t* spot){
+    return spot->invisibleGold;
+}
+void set_invisible_gold(spot_t* spot, bool set){
+    spot->invisibleGold = set;
 }

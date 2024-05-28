@@ -254,7 +254,7 @@ person_t* insert_person(map_t* map, char c, char* name, addr_t address){ //The i
     sprintf(random_string, "%d", random_number); //Turn random number to string
     int* temp = set_find(indexes, random_string); //Finds that string in the set
     final_index = *temp; //Sets the index associated with that value
-    person_t* person = person_new(c, name, address); //Create a new person with name 'c' and name 'name'
+    person_t* person = person_new(c, name, address, get_columns(map) *get_rows(map)); //Create a new person with name 'c' and name 'name'
     person_setPos(person, final_index); //Set position in person struct
     map->players[final_index] = person; //Set position in map
     set_delete(indexes, namedelete); //Deletes set 
@@ -268,27 +268,10 @@ void namedelete(void* item) //Deletes a name as helper function for hashtable
   }
 }
 
-void gold_initialize(map_t* map)
-{
-    int space_count = 0;
-    set_t* indices = get_freeSpace(map, &space_count);
-    if(space_count == 0){
-        fprintf(stderr, "No more spaces for initializing gold");
-        exit(1);
-    }
-    int random_piles = rand() % (GoldMaxNumPiles + 1 - GoldMinNumPiles) + GoldMinNumPiles;
-    int gold_remaining = GoldTotal - random_piles; // each pile must have at least one gold
-    for(int pile = 0; pile<random_piles; pile++){
-        int random_index = rand() % space_count;
-        int random_gold = rand() % gold_remaining;
-        gold_remaining -= random_gold;
-        char random_number_string[20];
-        sprintf(random_number_string, "%d", random_index);
-        int* position = set_find(indices, random_number_string);
-        spot_t * spot = map->grid[*position];
-        spot_add_gold(spot, random_gold);
-        spot_set_item(spot, '*');
-    }
+void gold_initialize(map_t* map){
+    
+
+    
 }
 
 
@@ -347,7 +330,7 @@ int get_columns(map_t* map){
     return map->columns;
 }
 
-char* grid_to_string(map_t* map) {
+char* grid_to_string_spectator(map_t* map){
     int total_size = (map->rows * (map->columns + 1)) + 1; // Including newlines and null terminator
     char *to_return = (char *)malloc(total_size * sizeof(char));
     if (!to_return) {
@@ -367,15 +350,57 @@ char* grid_to_string(map_t* map) {
         }
         strncat(to_return, &to_append, 1);
     }
-    // for (int row = 0; row < map->rows; row++) {
-    //     for (int col = 0; col < map->columns; col++) {
-    //         char to_append = spot_item(map->grid[row * map->columns + col]);
-    //         strncat(to_return, &to_append, 1);
-    //     }
-    //     strncat(to_return, "\n", 1);
-    // }
+    return to_return;
+}
 
-    // printf("%s", to_return);
+char* grid_to_string_player(map_t* map, char letter) {
+    FILE *file = fopen("output.txt", "w");
+    printf("reached here \n");
+    // Step 3: Check if the file was successfully opened
+    if (file == NULL) {
+        perror("Error opening file");
+    }
+
+
+    printf("map\n");
+    fflush(file);
+    int total_size = (map->rows * (map->columns + 1)) + 1; // Including newlines and null terminator
+    char *to_return = (char *)malloc(total_size * sizeof(char));
+    if (!to_return) {
+        return NULL;
+    }
+    to_return[0] = '\0'; // Initialize to empty string
+    fprintf(file, "map1\n");
+    fflush(file);
+    for(int index = 0; index < map->rows * map->columns; index++){
+        fprintf(file, "map2\n");
+        fflush(file);
+        char to_append;
+        if(map->players[index] != NULL){
+            fprintf(file, "map3\n");
+            fflush(file);
+            to_append = (letter == person_getLetter(map->players[index])) ? '@' : person_getLetter(map->players[index]);
+        }else{
+            fprintf(file, "map4\n");
+            fflush(file);
+            to_append = spot_item(map->grid[index]);
+            if(spot_invisible_gold(map->grid[index])){
+                to_append = '.';
+            }
+        }
+        if(index % map->columns -1 == 0){
+            strncat(to_return, "\n", 2);
+        }
+        if(!get_visibility(map->grid[index])){
+            to_append = ' ';
+        }
+        strncat(to_return, &to_append, 1);
+    }
+
+    printf("Here is what we return: %s", to_return);
+    fprintf(file, "map5\n");
+    fflush(file);
+    fclose(file);
     return to_return;
 }
 
@@ -388,11 +413,6 @@ void set_person(map_t* map, person_t* person){
 }
 
 
-// void update_visibility(spot_t** grid, int reference){
-
-// }
-
-
-// void check_visibility(spot_t** grid, int reference){
-
-// }
+spot_t** get_grid(map_t* map){
+    return map->grid;
+}

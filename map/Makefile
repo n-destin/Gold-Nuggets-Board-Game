@@ -6,7 +6,7 @@
 L = ../libcs50
 
 
-OBJS = maptest.o map.o spot.o person.o
+OBJS = maptest.o map.o spot.o person.o visibility.o
 LLIBS = $L/libcs50-given.a ../support/support.a
 LIBS = -lm
 
@@ -31,6 +31,7 @@ maptest: $(OBJS) $(LLIBS)
 map.o: map.h spot.h person.h
 spot.o: spot.h
 person.o: person.h
+visibility.o: visibility.h
 
 test: maptest
 	./maptest ../maps/small.txt

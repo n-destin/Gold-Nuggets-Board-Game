@@ -61,3 +61,7 @@ void spot_set_item(spot_t* spot, char item);
 
 // cloning a spot
 spot_t* spot_clone(spot_t* current_spot, int index, int position) ;
+
+void set_invisible_gold(spot_t* spot, bool set);
+
+bool spot_invisible_gold(spot_t* spot);
