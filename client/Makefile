@@ -1,23 +1,22 @@
 # Makefile for client.c
-# @SebastianFrazier26
+# @SebastianFrazier26/Izzy Axinn
 
-L = ../support/support.a
+SUPPORT_DIR = ../support
+L = $(SUPPORT_DIR)/support.a
 OBJS = client.o
-LLIBS = $L
-LIBS = -lm
-
+LIBS = -lm -lcurses $(L)
 
 # uncomment the following to turn on verbose memory logging
-#TESTING=-DMEMTEST
+# TESTING = -DMEMTEST
 
-CFLAGS = -Wall -pedantic -std=c11 -ggdb -I$L
+CFLAGS = -Wall -pedantic -std=c11 -ggdb -I$(SUPPORT_DIR)
 CC = gcc
 MAKE = make
 # for memory-leak tests
 VALGRIND = valgrind --leak-check=full --show-leak-kinds=all
 
-client: $(OBJS) $(LLIBS)
-	$(CC) $(CFLAGS) $(OBJS) $(LLIBS) $(LIBS) -lcurses -o $@ 
+client: $(OBJS)
+	$(CC) $(CFLAGS) $(OBJS) $(LIBS) -o $@
 
 client.o: client.h
 

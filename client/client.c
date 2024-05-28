@@ -27,15 +27,17 @@ void play(char* hostname, char* port, char* player_name, addr_t serverAddress);
 int is_key(char c);
 static void init_curses(void);
 
-WINDOW *inputwin;
+// Init global vars
+WINDOW *inputwin; // CURSES
 FILE* log_file;  
 char real_name;
-int NR;
+int NR; // Rows Columns global to capture CURSES window dimensions
 int NC;
 int n = 0; 
 int p = 0;
 int r = 0;
 bool spectator = false; 
+
 /* Main function to handle parsing args and initializing game/spectator modes.
 MODES:
 - Spectate if 2 arguments passed
@@ -87,11 +89,6 @@ int main(const int argc, char* argv[]) {
           exit(2); 
         }
 
-        // Check if server-messaging system initializes successfully
-        //bool ok = message_loop(&server, 0, NULL, handleInput, handleMessage);
-        //if (!ok) {fprintf(stderr, "Not ok"); exit(4);}
-        //message_done();
-        
         // Open our window
         init_curses();
         // fill_curses();
@@ -182,6 +179,7 @@ void play(char* hostname, char* port, char* player_name, addr_t serverAddress) {
     }
     message_send(serverAddress, message);
     flog_v(log_file, "Playing initiated succesfully\n");
+
     // Start playing
     bool ok = message_loop(&serverAddress, 0, NULL, handleInput, handleMessage);
     if (!ok) {fprintf(stderr, "Not ok"); exit(4);}
@@ -261,7 +259,8 @@ int is_key(char input) {
 static bool
 handleMessage(void* arg, const addr_t from, const char* message)
 {
-  //printf("Client recieved: '%s'\n", message);
+  
+  // Check if all is good on server side
   if (strncmp(message, "OK", 2) == 0) {
     if (sscanf(message, "OK %c", &real_name) == 1) {
     } else {
@@ -270,6 +269,8 @@ handleMessage(void* arg, const addr_t from, const char* message)
       flog_e(log_file, errorMessage);
     }
   }
+
+  // Get the GRID object from server to display map and check screen dimensions
   else if (strncmp(message, "GRID", 4) == 0){
     int gridrows = 0; 
     int gridcolumns = 0;
@@ -298,6 +299,7 @@ handleMessage(void* arg, const addr_t from, const char* message)
       }
   }
 
+  // Get GOLD information from client
   else if (strncmp(message, "GOLD", 4) == 0){
     if(spectator){
       if (sscanf(message, "GOLD %d", &r) == 1) {
@@ -307,6 +309,8 @@ handleMessage(void* arg, const addr_t from, const char* message)
         flog_e(log_file, errorMessage);
       }
     }
+
+    // Defense
     else{
       if (sscanf(message, "GOLD %d %d %d", &n, &p, &r) == 3) {
       } else {
@@ -316,8 +320,11 @@ handleMessage(void* arg, const addr_t from, const char* message)
       }
     }
   }
+
+  // Information for CURSES
   else if (strncmp(message, "DISPLAY", 7) == 0){
     
+    // HEADERS
     if(spectator){
     mvprintw(0, 1, "Spectator: %d nuggets unclaimed", r); 
     refresh();
@@ -327,37 +334,38 @@ handleMessage(void* arg, const addr_t from, const char* message)
       mvprintw(0, 1, "Player %c has %d nuggets (%d nuggets unclaimed)", real_name, p, r);
       refresh();
     }
+
+    // MAP
     mvprintw(1, NC/2, "%s", message + 8); 
     refresh();
   }
+  // Determine QUIT and print reason for quiiting to stdout + logfile
   else if (strncmp(message, "QUIT", 2) == 0){
-    endwin(); // Close window
-    char reason[1048];
+    char reason[200];
     memset(reason, 0, sizeof(reason));
-
-    int offset;
-    if (sscanf(message, "QUIT %n", &offset) == 0) {
-        // Copy the remainder of the message into reason
-        strncpy(reason, message + offset, sizeof(reason) - 1);
-        reason[sizeof(reason) - 1] = '\0'; // Ensure null-termination
-
-        fprintf(stdout, "%s\n", reason);
+    if (sscanf(message, "QUIT %180[^\n]", reason) == 1) {
+      fprintf(stdout, "%s\n", reason);
     } else {
       char errorMessage[256];
       snprintf(errorMessage, sizeof(errorMessage), "Failed to parse QUIT message: %s.\n", message);
       flog_e(log_file, errorMessage);
     }
     fflush(stdout);
+
+    // Shut it all down
+    endwin(); // Close window
     flog_v(log_file, "Exiting program sucessfully");
     flog_done(log_file);
     fclose(log_file);
     exit(0);
   }
+
+  // If errors print them
   else if (strncmp(message, "ERROR", 2) == 0){
     char reason[200];
     memset(reason, 0, sizeof(reason));
     if (sscanf(message, "ERROR %180[^\n]", reason) == 1) {
-      flog_e(stdout, message);
+      fprintf(stdout, "%s\n", reason);
     } else {
       char errorMessage[256];
       snprintf(errorMessage, sizeof(errorMessage), "Failed to parse ERROR message for spectator: %s.\n", message);
@@ -374,6 +382,7 @@ handleMessage(void* arg, const addr_t from, const char* message)
 }
 
 
+
 /* Function to start up curses window for game display
 @inputs - NONE
 @outputs - Displays curses window */
@@ -382,14 +391,12 @@ static void init_curses(void) {
   noecho();             // Don't echo while we do getch
   cbreak();             // Disable line buffering
   keypad(stdscr, TRUE); // Enable special keys capturing (like KEY_RESIZE)
-
     // Create the input window
   int starty = 1;       // Position: one line below the top of the screen
   int startx = 0;       // Start at the beginning of the line
   int width = COLS;     // Width spans the entire screen width
   inputwin = newwin(1, width, starty, startx);
   wrefresh(inputwin);
-
     // Set our screen size
   getmaxyx(stdscr, NR, NC);
 
@@ -398,6 +405,6 @@ static void init_curses(void) {
 
     // Colors
   start_color();
-  init_pair(2, COLOR_BLUE, COLOR_BLACK); // Color pair for background/text
+  init_pair(2, COLOR_MAGENTA, COLOR_BLACK); // Color pair for background/text
   attron(COLOR_PAIR(2));
 }

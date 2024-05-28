@@ -13,4 +13,4 @@ A spot is a place a place on a map which can hold a person and object. A spot ma
 A person is an object held within a map and corresponds to a player in the game nuggets. A person has an amount of gold, as well as a name and position on a map.
 
 ### maptest.c
-A testing program which samples how to use the map directory 
+A unit testing program which samples how to use the map directory 
