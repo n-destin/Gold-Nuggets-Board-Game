@@ -331,19 +331,17 @@ handleMessage(void* arg, const addr_t from, const char* message)
     refresh();
   }
   else if (strncmp(message, "QUIT", 2) == 0){
+    endwin(); // Close window
     char reason[200];
     memset(reason, 0, sizeof(reason));
-    if (sscanf(message, "QUIT %180[^\n]", reason) == 1) {
-      clear();
-      mvprintw(0, 1, "%s\n", reason);
-      refresh();
+    if (sscanf(message, "QUIT %s", reason) == 1) {
+      fprintf(stdout, "%s\n", message);
     } else {
       char errorMessage[256];
       snprintf(errorMessage, sizeof(errorMessage), "Failed to parse QUIT message: %s.\n", message);
       flog_e(log_file, errorMessage);
     }
     fflush(stdout);
-    endwin(); // Close window
     flog_v(log_file, "Exiting program sucessfully");
     flog_done(log_file);
     fclose(log_file);

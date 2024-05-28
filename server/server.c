@@ -77,10 +77,10 @@ void send_summary_and_quit(game_t * game) {
     char summary[1024] = "QUIT GAME OVER:\n";
     person_t** players = get_players(game->map);
     for (int i = 0; i < (get_rows(game->map) * get_columns(game->map)); i++) {
-        char playerSummary[128];
-        snprintf(playerSummary, sizeof(playerSummary), "%c %d %s\n", person_getLetter(players[i]), person_getGold(players[i]), person_getName(players[i]));
-        strncat(summary, playerSummary, sizeof(summary) - strlen(summary) - 1);
         if(players[i] != NULL){
+        char playerSummary[128];
+            snprintf(playerSummary, sizeof(playerSummary), "%c %d %s\n", person_getLetter(players[i]), person_getGold(players[i]), person_getName(players[i]));
+            strncat(summary, playerSummary, sizeof(summary) - strlen(summary) - 1);
             message_send(person_getAddr(players[i]), summary);
         }
     }
@@ -95,7 +95,6 @@ void broadcast(game_t* game)
     char* string_map = NULL;
     person_t** players = get_players(game->map);
     int gold_collected = 0;
-    printf("here1\n");
     for(int index = 0; index < (get_rows(game->map) * get_columns(game->map)); index++){
         person_t * person = players[index];
         if (person != NULL){
