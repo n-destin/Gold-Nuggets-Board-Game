@@ -83,7 +83,7 @@ void send_summary_and_quit(game_t * game) {
         }
     }
     if (game->num_spectators > 0) {
-        message_send(game->spectator_address, "QUIT");
+        message_send(game->spectator_address, summary);
     }
     printf("%s", summary);
 }

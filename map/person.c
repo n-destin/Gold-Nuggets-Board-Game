@@ -19,6 +19,7 @@ typedef struct person{// Person has a name, position, and a quantity of gold
     int* visible;
     char name[MaxNameLength];
     addr_t address;
+    int max_pos; 
 } person_t;
 
 person_t* person_new(char c, char* name, addr_t address, int max_position){
@@ -28,7 +29,11 @@ person_t* person_new(char c, char* name, addr_t address, int max_position){
         fprintf(stderr, "Memory allocation error");
         exit(1);          
     }
-    person->visible = (int*) malloc(sizeof(int) * max_position);
+    person->visible = malloc(max_position * sizeof(int*));
+    if (person->visible == NULL) {
+        fprintf(stderr, "Memory allocation error");
+        exit(1);
+    }
     for (int i = 0; i < max_position; i++) {
         person->visible[i] = 0;
     }
@@ -37,6 +42,7 @@ person_t* person_new(char c, char* name, addr_t address, int max_position){
     person->address = address;
     strcpy(person->name, name);
     person->gold = 0;
+    person->max_pos=max_position;
     return person;
 }
 
@@ -79,7 +85,10 @@ int person_getPos(person_t* person){
 }
 
 void person_delete(person_t* person){
-    printf("got here");
+   //for (int i = 0; i < person->max_pos; i++) {
+     //   free(person->visible[i]);
+   // }
+    free(person->visible);
     free(person);
 }
 
