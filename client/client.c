@@ -332,10 +332,16 @@ handleMessage(void* arg, const addr_t from, const char* message)
   }
   else if (strncmp(message, "QUIT", 2) == 0){
     endwin(); // Close window
-    char reason[200];
+    char reason[1048];
     memset(reason, 0, sizeof(reason));
-    if (sscanf(message, "QUIT %s", reason) == 1) {
-      fprintf(stdout, "%s\n", message);
+
+    int offset;
+    if (sscanf(message, "QUIT %n", &offset) == 0) {
+        // Copy the remainder of the message into reason
+        strncpy(reason, message + offset, sizeof(reason) - 1);
+        reason[sizeof(reason) - 1] = '\0'; // Ensure null-termination
+
+        fprintf(stdout, "%s\n", reason);
     } else {
       char errorMessage[256];
       snprintf(errorMessage, sizeof(errorMessage), "Failed to parse QUIT message: %s.\n", message);

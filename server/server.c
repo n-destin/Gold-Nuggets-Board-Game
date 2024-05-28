@@ -81,6 +81,11 @@ void send_summary_and_quit(game_t * game) {
         char playerSummary[128];
             snprintf(playerSummary, sizeof(playerSummary), "%c %d %s\n", person_getLetter(players[i]), person_getGold(players[i]), person_getName(players[i]));
             strncat(summary, playerSummary, sizeof(summary) - strlen(summary) - 1);
+        }
+    }
+
+    for (int i = 0; i < (get_rows(game->map) * get_columns(game->map)); i++) {
+        if(players[i] != NULL){
             message_send(person_getAddr(players[i]), summary);
         }
     }
@@ -98,8 +103,6 @@ void broadcast(game_t* game)
     for(int index = 0; index < (get_rows(game->map) * get_columns(game->map)); index++){
         person_t * person = players[index];
         if (person != NULL){
-            visibility(person, game->map);
-            string_map = grid_to_string_player(game->map, person_getLetter(person));
             gold_collected += person_getGold(person);
         }
     }
@@ -107,6 +110,8 @@ void broadcast(game_t* game)
     for(int index = 0; index < (get_rows(game->map) * get_columns(game->map)); index++){
         person_t * person = players[index];
         if (person != NULL){
+            visibility(person, game->map);
+            string_map = grid_to_string_player(game->map, person_getLetter(person));
             char send_gold[50];
             char send_display[strlen(string_map) + 10];
             sprintf(send_display, "DISPLAY\n%s", string_map);
@@ -126,6 +131,7 @@ void broadcast(game_t* game)
         message_send(game->spectator_address, send_display_spectator);
     }
 }
+
 
 
 void setup_network(game_t game) {
@@ -212,7 +218,9 @@ bool handle_message(void* arg, const addr_t from, const char* message) {
         else{
             if(isupper((unsigned char)direction)){
                 direction = tolower(direction);
-                while(move_person(game->map, sender, direction)){}
+                while(move_person(game->map, sender, direction)){
+                    visibility(sender, game->map);
+                }
             }
             else{
                 move_person(game->map, sender, direction);
