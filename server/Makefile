@@ -18,7 +18,7 @@ test: server
 		./server ../maps/small.txt
 
 valgrind: server
-		$(VALGRIND) ./server ../maps/main.txt
+		$(VALGRIND) ./server ../maps/small.txt
 
 .PHONY: test valgrind clean
 

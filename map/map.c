@@ -283,7 +283,9 @@ void gold_initialize(map_t* map)
         spot_add_gold(spot, random_gold + 1); //Adds gold and ensure that tehre is at eleast one
         compare_gold += random_gold + 1;
         spot_set_item(spot, '*'); //Sets spot to gold character
+        set_delete(indices, namedelete);
     }
+    
 }
 
 

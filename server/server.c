@@ -111,6 +111,7 @@ void broadcast(game_t* game)
             sprintf(send_gold, "GOLD %d %d %d ", 0, person_getGold(person), game->remaining_gold);
             message_send(person_getAddr(person), send_gold);
             message_send(person_getAddr(person), send_display);
+            free(string_map);
         }
     }
     if(message_isAddr(game->spectator_address)){
@@ -121,6 +122,7 @@ void broadcast(game_t* game)
         sprintf(send_gold_spectator, "GOLD %d", game->remaining_gold);
         message_send(game->spectator_address, send_gold_spectator);
         message_send(game->spectator_address, send_display_spectator);
+        free(string_map);
     }
 }
 
@@ -192,15 +194,9 @@ bool handle_message(void* arg, const addr_t from, const char* message) {
             message_send(game->spectator_address, "QUIT You have been replaced by a new spectator.");
         }
         game->spectator_address = from;
-        // message_setAddr("plank", "", &(game->spectator_address));
-
         game->num_spectators = 1;
     } else if (strncmp(message, "KEY ", 4) == 0) {
         char direction = message[4]; 
-        if(sender == NULL){
-            fprintf(stderr, "The sender is NULL\n");
-            exit(1);
-        }
         if(direction == 'Q'){ 
             if (message_eqAddr(from, game->spectator_address)){
                 message_send(from, "QUIT Thanks for watching!");
@@ -228,6 +224,7 @@ bool handle_message(void* arg, const addr_t from, const char* message) {
     if(game->remaining_gold == 0){
         // send the quit message to everyone and summary and then change everything
         send_summary_and_quit(game);
+        map_delete(game->map);
         return true;
     }
     return false; 

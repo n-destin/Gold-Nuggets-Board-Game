@@ -79,6 +79,7 @@ int person_getPos(person_t* person){
 }
 
 void person_delete(person_t* person){
+    printf("got here");
     free(person);
 }
 
