@@ -1,3 +1,8 @@
+/*
+* Map.c is a file which contains all the information about map
+* Izzy / Destin - 2024
+*/
+
 #include <stdio.h>
 #include <stdbool.h>
 #include <string.h>
@@ -339,20 +344,20 @@ int get_columns(map_t* map){
 
 char* grid_to_string_spectator(map_t* map){
     int total_size = (map->rows * (map->columns + 1)) + 1; // Including newlines and null terminator
-    char *to_return = (char *)malloc(total_size * sizeof(char)); //Allocating memory for map
+    char *to_return = (char *)malloc(total_size * sizeof(char));
     if (!to_return) {
         return NULL;
     }
     to_return[0] = '\0'; // Initialize to empty string
 
-    for(int index = 0; index < map->rows * map->columns; index++){ //Looping through map
+    for(int index = 0; index < map->rows * map->columns; index++){
         char to_append;
         if(map->players[index] != NULL){
-            to_append = person_getLetter(map->players[index]); //Adds players
+            to_append = person_getLetter(map->players[index]);
         }else{
-            to_append = spot_item(map->grid[index]); //Adds items
+            to_append = spot_item(map->grid[index]);
         }
-        if(index % map->columns -1 == 0){ //If at end of row
+        if(index % map->columns -1 == 0){
             strncat(to_return, "\n", 2);
         }
         strncat(to_return, &to_append, 1);

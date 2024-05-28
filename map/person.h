@@ -18,14 +18,14 @@ typedef struct sockaddr_in addr_t;
 
 /**************** person_new ****************/
 /*
-* Allocates memory for a spot. Sets name to 'c' and sets gold to 0.
+* Allocates memory for a person. Sets name to 'c' and sets gold to 0.
 * Caller is responsible for calling person_delete
 */
 person_t* person_new(char c, char* name, addr_t address, int max_positions);
 
 /**************** person_addGold ****************/
 /*
-* Adds 1 gold to person's count
+* Adds specified amount of gold to person's count
 */
 void person_addGold(person_t* person, int gold);
 
@@ -39,13 +39,13 @@ char person_getLetter(person_t* person);
 
 /**************** person_getName ****************/
 /*
-* Returns person's gold count
+* Returns person's name
 */
 char* person_getName(person_t* person);
 
-/**************** person_getGold ****************/
+/**************** person_setPos ****************/
 /*
-* Returns person's name
+* Set a persons position
 */
 void person_setPos(person_t* person, int new_pos);
 
@@ -72,6 +72,14 @@ void person_setName(person_t* person, char c);
 
 person_t* person_clone( person_t* original);
 
+/**************** get_visible ****************/
+/*
+ * Returns the array of what is visible/not visible for a given person
+ * Within the array, zero means it is visible and otherwise it should be visible to that player
+ */
 int* get_visible(person_t* person);
 
+/**************** update_visible_array ****************/
+ /* Updates what is visible and not visible to the player
+ */
 void update_visible_array(person_t* person, int index);

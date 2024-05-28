@@ -123,44 +123,14 @@ int main(const int argc, char* argv[]) {
 @outputs - messages recieved from server
 */
 void spectate(char* serverHost, char* serverPort, addr_t serverAddress) {
-    spectator = true;
-    // Tell the server we're spectating
-    char* message = "SPECTATE";
-    message_send(serverAddress, message);
-    flog_v(log_file, "Spectating initiated succesfully\n");
-    
-    char str[80];
-    int ch, i = 0;
-    while ((ch = wgetch(inputwin)) != '\n') {
-        // Handle backspace
-        if (ch == KEY_BACKSPACE || ch == 127) {
-            if (i > 0) {
-                i--;
-                mvwdelch(inputwin, 0, i);
-            }
-        } else {
-            // Add character to the buffer
-            str[i] = ch;
-            i++;
-            // Display character on the screen
-            waddch(inputwin, ch);
-        }
-        wrefresh(inputwin);
-    }
-
-    // Null-terminate the string
-    str[i] = '\0';
-
-    // Clear the input window
-    werase(inputwin);
-    wrefresh(inputwin);
-
-    // Display the entered text
-    mvprintw(2, 0, "You entered: %s", str);
-    // Start spectating
-    bool ok = message_loop(&serverAddress, 0, NULL, handleInput, handleMessage);
-    if (!ok) {fprintf(stderr, "Not ok"); exit(4);}
-    message_done();
+  spectator = true;
+  // Tell the server we're spectating
+  char* message = "SPECTATE";
+  message_send(serverAddress, message);
+  flog_v(log_file, "Spectating initiated succesfully\n");
+  bool ok = message_loop(&serverAddress, 0, NULL, handleInput, handleMessage);
+  if (!ok) {fprintf(stderr, "Not ok"); exit(4);}
+  message_done();
 }
 
 /* Play function to tell server to setup client as a player, allows game interaction
@@ -326,8 +296,8 @@ handleMessage(void* arg, const addr_t from, const char* message)
     
     // HEADERS
     if(spectator){
-    mvprintw(0, 1, "Spectator: %d nuggets unclaimed", r); 
-    refresh();
+      mvprintw(0, 1, "Spectator: %d nuggets unclaimed", r); 
+      refresh();
     }
     
     else{
@@ -341,9 +311,13 @@ handleMessage(void* arg, const addr_t from, const char* message)
   }
   // Determine QUIT and print reason for quiiting to stdout + logfile
   else if (strncmp(message, "QUIT", 2) == 0){
-    char reason[200];
-    memset(reason, 0, sizeof(reason));
-    if (sscanf(message, "QUIT %180[^\n]", reason) == 1) {
+    endwin(); //close window
+    char reason[1048];
+    int offset;
+    if (sscanf(message, "QUIT %n", &offset) == 0) {
+      // Copy the remainder of the message into reason
+      strncpy(reason, message + offset, sizeof(reason) - 1);
+      reason[sizeof(reason) - 1] = '\0'; // Ensure null-termination
       fprintf(stdout, "%s\n", reason);
     } else {
       char errorMessage[256];
@@ -353,7 +327,6 @@ handleMessage(void* arg, const addr_t from, const char* message)
     fflush(stdout);
 
     // Shut it all down
-    endwin(); // Close window
     flog_v(log_file, "Exiting program sucessfully");
     flog_done(log_file);
     fclose(log_file);

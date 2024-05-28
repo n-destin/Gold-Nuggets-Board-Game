@@ -17,32 +17,6 @@ static int convertXY(int xCoord, int yCoord, int rows, int columns);
 static bool isOnLine(int x, int y, int x1, int y1, int x2, int y2);
 static bool sideOfLine(int xA, int yA, int xB, int yB, int x1, int y1, int x2, int y2);
 
-
-/* Unit testing for the visibility module. 
- * I commented it out but it demonstrates how this can be used
- * Since we don't have movement yet, I just added a bunch of people to the large map and checked their visibility
- */
-/* int main(int argc, char *argv[]){
-    map_t* map = map_new("/thayerfs/home/f006hjn/cs50-dev/nuggets-Mr-Axinn/maps/big.txt");
-    person_t* person1 = insert_person(map, '@');
-    visibility(person1, map);
-    map_print(map, stdout);
-    //move_person(map, person1, 'l');
-    person_t* person2 = insert_person(map, '?');
-    visibility(person2, map);
-    person_t* person3 = insert_person(map, '^');
-    visibility(person3, map);
-    person_t* person4 = insert_person(map, 'w');
-    visibility(person4, map);
-    person_t* person5 = insert_person(map, 'p');
-    visibility(person5, map);
-    person_t* person6 = insert_person(map, 'q');
-    visibility(person6, map);
-    map_print(map, stdout);
-
-    map_delete(map);
-
-}  */
 /* This method is called on a person after each move and given the person and map as parameters
  * It will go through the entire map and set every point as visible/invisible as needed
  */
@@ -333,8 +307,6 @@ static bool isOnLine(int x, int y, int x1, int y1, int x2, int y2){
  * This is used to know when we actually cross an x/y value(not the estimate) to check for barriers
  * More description of use can be found in the shallow/steep line methods
  */
-
-
 static bool sideOfLine(int xA, int yA, int xB, int yB, int x1, int y1, int x2, int y2){
     double dx= x2-x1;
     double dy= y2-y1;
@@ -351,3 +323,30 @@ static bool sideOfLine(int xA, int yA, int xB, int yB, int x1, int y1, int x2, i
         return false;
     }
 }
+
+/* Unit testing for the visibility module. 
+ * I commented it out but it demonstrates how this can be used
+ * Since we don't have movement yet, I just added a bunch of people to the large map and checked their visibility
+ */
+/* int main(int argc, char *argv[]){
+    map_t* map = map_new("/thayerfs/home/f006hjn/cs50-dev/nuggets-Mr-Axinn/maps/big.txt");
+    person_t* person1 = insert_person(map, '@');
+    visibility(person1, map);
+    map_print(map, stdout);
+    //move_person(map, person1, 'l');
+    person_t* person2 = insert_person(map, '?');
+    visibility(person2, map);
+    person_t* person3 = insert_person(map, '^');
+    visibility(person3, map);
+    person_t* person4 = insert_person(map, 'w');
+    visibility(person4, map);
+    person_t* person5 = insert_person(map, 'p');
+    visibility(person5, map);
+    person_t* person6 = insert_person(map, 'q');
+    visibility(person6, map);
+    map_print(map, stdout);
+
+    map_delete(map);
+
+} 
+*/

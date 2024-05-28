@@ -18,7 +18,6 @@
 typedef struct map map_t;
 typedef struct sockaddr_in addr_t;
 
-// typedef struct player person_t*
 
 /**************** functions ****************/
 
@@ -84,47 +83,34 @@ bool move_person(map_t* map, person_t* person, char direction);
 
 
 /**************** gold_initialize ****************/
-/*
-* Initializes the gold in the map into random piles with random amounts of gold and places
-* this gold on places in the map with free spaces 
-*/
+// Initializes the gold onto the map
 void gold_initialize(map_t* map);
 
-
 /**************** get_rows ****************/
-/*
-* Gets map rows
-*/
+// Returns the number of rows on the map
 int get_rows(map_t * map);
 
-/**************** get_columns ****************/
-/*
-* Gets map columns
-*/
+/**************** get_columns****************/
+// Return the number of columns on the map
 int get_columns(map_t* map);
 
-
 /**************** grid_to_string_player ****************/
-/*
-* Takes in a map and a character letter and turns map into printable string which 
-* takes visibility into consideration and replaces that person's letter with @
-*/
+/* Converts the grid into a string for what the player sees
+ * Uses visible to keep track of what should/should not be displayed
+ *
+ */
 char* grid_to_string_player(map_t* map, char letter);
 
 /**************** grid_to_string_spectator ****************/
-/*
-* Returns to map in its pure form with no visibility rules applied
-*/
+/* Converts the grid into a string for what a spectator should see
+ * This is the entire map, since a spectator should be able to see everything
+ */
 char* grid_to_string_spectator(map_t* map);
 
 /**************** set_person ****************/
-/*
-* Clones a person, used as a helper function to copy a map
-*/
+// Creates a clone of the person which is stored in our array of people
 void set_person(map_t* map, person_t* person);
 
-/**************** set_person ****************/
-/*
-* Gets a map grid
-*/
+/**************** get_grid****************/
+// Returns the grid associated with a given map
 spot_t** get_grid(map_t* map);

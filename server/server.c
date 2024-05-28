@@ -10,6 +10,7 @@
 #include "../libcs50/file.h"
 #include "../map/visibility.h"
 #include <ctype.h>
+#include "server.h"
 
 #define MaxNameLength 50   // max number of chars in playerName
 #define MaxPlayers 26      // maximum number of players
@@ -19,7 +20,7 @@
 
 
 
-typedef struct {
+typedef struct game {
     map_t* map; // this is the base map
     int num_players;
     int num_spectators; // binary
@@ -32,13 +33,6 @@ game_t game;
 
 typedef struct sockaddr_in addr_t;
 
-void initialize_game();
-void handle_client_messages();
-void send_summary_and_quit();
-bool handle_message(void* arg, const addr_t from, const char* message);
-void setup_network();
-static int contains_non_space(const char *str);
-
 int main(int argc, char *argv[]) {
     if (argc < 2 || argc > 3) {
         fprintf(stderr, "Usage: %s <mapfile> [seed]\n", argv[0]);
@@ -50,7 +44,6 @@ int main(int argc, char *argv[]) {
         fprintf(stderr, "Seed must be a positive integer\n");
         exit(1);
     }
-    // map_t * map = map_new(map_filepathname);
     srand(seed);
     initialize_game(map_filepathname);
     setup_network(game);
@@ -120,11 +113,10 @@ void broadcast(game_t* game)
             message_send(person_getAddr(person), send_display);
         }
     }
-    addr_t noAdress = message_noAddr();
-    if(!message_eqAddr(game->spectator_address, noAdress)){
+    if(message_isAddr(game->spectator_address)){
         char send_gold_spectator[50];
-        char send_display_spectator[strlen(string_map) + 10];
         string_map = grid_to_string_spectator(game->map);
+        char send_display_spectator[strlen(string_map) + 10];
         sprintf(send_display_spectator, "DISPLAY\n%s", string_map);
         sprintf(send_gold_spectator, "GOLD %d", game->remaining_gold);
         message_send(game->spectator_address, send_gold_spectator);
@@ -200,6 +192,8 @@ bool handle_message(void* arg, const addr_t from, const char* message) {
             message_send(game->spectator_address, "QUIT You have been replaced by a new spectator.");
         }
         game->spectator_address = from;
+        // message_setAddr("plank", "", &(game->spectator_address));
+
         game->num_spectators = 1;
     } else if (strncmp(message, "KEY ", 4) == 0) {
         char direction = message[4]; 
