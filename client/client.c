@@ -306,7 +306,7 @@ handleMessage(void* arg, const addr_t from, const char* message)
       refresh();
     }
 
-    mvprintw(1, 1, message + 8);
+    mvprintw(1, 1, "%s", message + 8);
     refresh();
   }
   // Determine QUIT and print reason for quiiting to stdout + logfile
