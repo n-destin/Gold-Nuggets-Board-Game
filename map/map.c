@@ -359,7 +359,7 @@ char* grid_to_string_spectator(map_t* map){
         }else{
             to_append = spot_item(map->grid[index]);
         }
-        if((index != 0) && (index % map->columns == 0)){
+        if(index % map->columns == 0){
             strncat(to_return, "\n", 2);
         }
         strncat(to_return, &to_append, 1);
@@ -384,7 +384,7 @@ char* grid_to_string_player(map_t* map, char letter) {
                 to_append = '.';
             }
         }
-        if((index != 0) && (index % map->columns == 0)){
+        if(index % map->columns == 0){
             strncat(to_return, "\n", 2);
         }
         if(!get_visibility(map->grid[index])){ //Getting visibility and applying it to map
