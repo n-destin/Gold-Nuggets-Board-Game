@@ -38,6 +38,7 @@ int p = 0;
 int r = 0;
 bool spectator = false; 
 
+void print_multiline_string(WINDOW *win, const char *str, int start_row, int start_col);
 /* Main function to handle parsing args and initializing game/spectator modes.
 MODES:
 - Spectate if 2 arguments passed
@@ -305,14 +306,13 @@ handleMessage(void* arg, const addr_t from, const char* message)
       refresh();
     }
 
-    // MAP
-    mvprintw(1, NC/2, "%s", message + 8); 
+    print_multiline_string(stdscr, message + 8, 1, 1);
     refresh();
   }
   // Determine QUIT and print reason for quiiting to stdout + logfile
   else if (strncmp(message, "QUIT", 2) == 0){
     endwin(); //close window
-    
+
     char reason[1048];
     int offset;
     if (sscanf(message, "QUIT %n", &offset) == 0) {
@@ -355,7 +355,29 @@ handleMessage(void* arg, const addr_t from, const char* message)
   return false;
 }
 
+void print_multiline_string(WINDOW *win, const char *str, int start_row, int start_col) {
+    char buffer[256];  // Buffer to hold each line temporarily
+    int line = 0;      // Line counter
+    const char *p = str;
 
+    while (*p) {
+        const char *newline = strchr(p, '\n');
+        if (newline) {
+            // If there's a newline character, copy up to the newline
+            int length = newline - p;
+            strncpy(buffer, p, length);
+            buffer[length] = '\0';
+            p = newline + 1;  // Move past the newline
+        } else {
+            // No newline character, copy the rest of the string
+            strcpy(buffer, p);
+            p += strlen(p);  // Move to the end of the string
+        }
+        // Print the line at the specified position
+        mvwaddstr(win, start_row + line, start_col, buffer);
+        line++;  // Move to the next line
+    }
+  }
 
 /* Function to start up curses window for game display
 @inputs - NONE
