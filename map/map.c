@@ -265,15 +265,20 @@ void namedelete(void* item) //Deletes a name as helper function for hashtable
 void gold_initialize(map_t* map)
 {
     int compare_gold = 0;
-    int random_piles = rand() % (GoldMaxNumPiles + 1 - GoldMinNumPiles) + GoldMinNumPiles; //Defining the number of random piles
+    int random_piles = rand() % (GoldMaxNumPiles + 1 - GoldMinNumPiles) + GoldMinNumPiles;  //Defining the number of random piles
     int gold_remaining = GoldTotal - random_piles; // each pile must have at least one gold
+    int space_count = 0;
+    set_t* indices = get_freeSpace(map, &space_count); // get the free spaces
+    while(random_piles >= space_count){
+        random_piles = rand() % (GoldMaxNumPiles + 1 - GoldMinNumPiles) + GoldMinNumPiles; 
+    }
     for(int pile = 0; pile<random_piles; pile++){ //Go through each pile
-        int space_count = 0;
+        
         int random_gold = rand() % gold_remaining; 
         if(pile == random_piles - 1){ //Last pile add remaining gold
             random_gold = gold_remaining;
         }
-        set_t* indices = get_freeSpace(map, &space_count); // get the free spaces
+        
         int random_index = rand() % space_count; //Define a random index in the random piles
         gold_remaining -= random_gold; //Subtract the random gold defined from total remaining
         char random_number_string[20];
@@ -283,9 +288,8 @@ void gold_initialize(map_t* map)
         spot_add_gold(spot, random_gold + 1); //Adds gold and ensure that tehre is at eleast one
         compare_gold += random_gold + 1;
         spot_set_item(spot, '*'); //Sets spot to gold character
-        set_delete(indices, namedelete);
     }
-    
+    set_delete(indices, namedelete);
 }
 
 

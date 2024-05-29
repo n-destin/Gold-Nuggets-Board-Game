@@ -173,8 +173,10 @@ bool handle_message(void* arg, const addr_t from, const char* message) {
                 message_send(from, "QUIT Sorry - you must provide player's name.");
             }
             person_t* new_player = insert_person(game->map, character, name, from);
+            if(new_player == NULL){
+                message_send(from, "QUIT Sorry there is no more space in the grid");
+            }
             char gridMessage[100]; 
-
             sprintf(gridMessage, "GRID %d %d", get_rows(game->map), get_columns(game->map));
             message_send(from, gridMessage);
             if(new_player == NULL){

@@ -312,6 +312,7 @@ handleMessage(void* arg, const addr_t from, const char* message)
   // Determine QUIT and print reason for quiiting to stdout + logfile
   else if (strncmp(message, "QUIT", 2) == 0){
     endwin(); //close window
+    
     char reason[1048];
     int offset;
     if (sscanf(message, "QUIT %n", &offset) == 0) {
