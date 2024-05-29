@@ -57,8 +57,8 @@ int main(const int argc, char* argv[]) {
         perror("ioctl");
         exit(EXIT_FAILURE);
     }
-    NR =  w.ws_row;
-    NC = w.ws_col;
+    NR =  w.ws_row + 1;
+    NC = w.ws_col + 1;
     // PARSE ARGS
     // Check arg count
     
@@ -306,7 +306,7 @@ handleMessage(void* arg, const addr_t from, const char* message)
       refresh();
     }
 
-    print_multiline_string(stdscr, message + 8, 1, 1);
+    mvprintw(1, 1, message + 8);
     refresh();
   }
   // Determine QUIT and print reason for quiiting to stdout + logfile
@@ -355,29 +355,6 @@ handleMessage(void* arg, const addr_t from, const char* message)
   return false;
 }
 
-void print_multiline_string(WINDOW *win, const char *str, int start_row, int start_col) {
-    char buffer[256];  // Buffer to hold each line temporarily
-    int line = 0;      // Line counter
-    const char *p = str;
-
-    while (*p) {
-        const char *newline = strchr(p, '\n');
-        if (newline) {
-            // If there's a newline character, copy up to the newline
-            int length = newline - p;
-            strncpy(buffer, p, length);
-            buffer[length] = '\0';
-            p = newline + 1;  // Move past the newline
-        } else {
-            // No newline character, copy the rest of the string
-            strcpy(buffer, p);
-            p += strlen(p);  // Move to the end of the string
-        }
-        // Print the line at the specified position
-        mvwaddstr(win, start_row + line, start_col, buffer);
-        line++;  // Move to the next line
-    }
-  }
 
 /* Function to start up curses window for game display
 @inputs - NONE
@@ -389,8 +366,8 @@ static void init_curses(void) {
   keypad(stdscr, TRUE); // Enable special keys capturing (like KEY_RESIZE)
     // Create the input window
   int starty = 1;       // Position: one line below the top of the screen
-  int startx = 0;       // Start at the beginning of the line
-  int width = COLS;     // Width spans the entire screen width
+  int startx = 1;       // Start at the beginning of the line
+  int width = COLS + 1;     // Width spans the entire screen width
   inputwin = newwin(1, width, starty, startx);
   wrefresh(inputwin);
     // Set our screen size
