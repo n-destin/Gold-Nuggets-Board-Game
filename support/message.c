@@ -12,7 +12,7 @@
  *
  * David Kotz - May 2019
  */
-
+ 
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -159,6 +159,7 @@ message_setAddr(const char* hostname, const char* portString, addr_t* addr)
     log_v("message_setAddr: called with NULL argument");
     return false;
   }
+  
   
   // Look up the hostname
   struct hostent *hostp = gethostbyname(hostname);

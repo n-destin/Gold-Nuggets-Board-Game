@@ -1,3 +1,8 @@
+/*
+* Map.c is a file which contains all the information about map
+* Izzy / Destin - 2024
+*/
+
 #include <stdio.h>
 #include <stdbool.h>
 #include <string.h>
@@ -8,6 +13,12 @@
 #include "spot.h"
 #include "map.h"
 #include "person.h"
+#include <unistd.h> 
+#include <arpa/inet.h>
+
+#define GoldTotal 250      // amount of gold in the game
+#define GoldMinNumPiles 10 // minimum number of gold piles
+#define GoldMaxNumPiles 30 // maximum number of gold piles
 
 typedef struct map{ //Contains the rows and columns of the grid, and a grid of objects and a grid of players
     int rows;
@@ -15,6 +26,7 @@ typedef struct map{ //Contains the rows and columns of the grid, and a grid of o
     spot_t** grid;
     person_t** players; 
 } map_t;
+
 
 map_t* map_new(char* path){
     map_t* map = calloc(1, sizeof(map_t)); //Allocates memory for map
@@ -95,10 +107,11 @@ void map_print(map_t* map, FILE* out){
             }
             else if(map->players[column + (row*map->columns)] != NULL){ //Found a player
                 person_t* person = map->players[column + (row*map->columns)]; //Get player there
-                fprintf(out, "%c", person_getName(person)); //Print player (all players are visible but could be changed)
+                fprintf(out, "%c", person_getLetter(person)); //Print player (all players are visible but could be changed)
             }else{
                 spot_t* spot = map->grid[column + (row*map->columns)]; //Get the spot
-                if(get_visibility(spot)){ //Check spot visibility
+                if(!get_visibility(spot)){ //Check spot visibility
+                    // modify this to account for visible gold.
                     fprintf(out, "%c", spot_item(spot));
                 }
                 else{ //Print space
@@ -177,18 +190,23 @@ bool move_person(map_t* map, person_t* person, char direction){
         }
         new_pos = current_pos + map->columns + 1;
     }
-
+    
     if(map->players[new_pos] != NULL){ //If there is a player in the way
-        char temp_name = person_getName(person); //Create temp
-        person_setName(person, person_getName(map->players[new_pos])); //Swap positions
-        person_setName(map->players[new_pos], temp_name); //Swap positions
+        person_setPos(map->players[new_pos], current_pos); //Switching person 
+        person_setPos(person, new_pos); //Going to new position
+        person_t *temp = map->players[new_pos]; //Creating temporary person
+        map->players[new_pos] = person; 
+        map->players[current_pos] = temp;
+
     }
     else if(spot_item(map->grid[new_pos]) == '.' || spot_item(map->grid[new_pos]) == '#' || spot_item(map->grid[new_pos]) == '*'){ //Valid movment square
         person_setPos(person, new_pos);  //Move person
         map->players[current_pos] = NULL; 
         map->players[new_pos] = person;
         if(spot_item(map->grid[new_pos]) == '*'){ //Found gold
-            person_addGold(person); //Add gold to player count
+            int gold = spot_get_gold(map->grid[new_pos]);
+            fprintf(stdout, "Gold on this spot was: %d\n", gold);
+            person_addGold(person, gold); //Add gold to player count
             spot_insert(map->grid[new_pos], '.'); //Inserts '.' in its place 
         }
     }
@@ -198,34 +216,39 @@ bool move_person(map_t* map, person_t* person, char direction){
     return true;
 }
 
-person_t* insert_person(map_t* map, char c){ //The idea is to insert all possible position into a set and extract one randomly
-    set_t* indexes = set_new(); //Create set of possible indexes
-    int num_spaces = 0;
-    int final_index = 0;
+set_t* get_freeSpace(map_t * map, int* num_spaces){
+    set_t* toReturn = set_new(); //Define the set of free spaces
     for(int i = 0; i < (map->columns*map->rows); i++){ //Go through all grid spots
-        if((spot_item(map->grid[i]) == '.') && map->players[i] == NULL){ //No players here and '.' present
+        if((spot_item(map->grid[i]) == '.') && map->players[i] == NULL && (spot_get_gold(map->grid[i])== 0)){ //No players here and '.' present and no gold
             char key[20];
-            sprintf(key, "%d", num_spaces);
-            int* value = malloc(sizeof(int));
+            sprintf(key, "%d", *num_spaces);  
+            int* value = malloc(sizeof(int)); 
             if (value != NULL) { 
-                *value = i;
-                set_insert(indexes, key, value); //Adds possible key to the set with current index
+                *value = i; //Going through each key in map
+                set_insert(toReturn, key, value); //Adds possible key to the set with current index
             } else {
                 fprintf(stderr, "Memory failure");
             }
-            num_spaces++;
+            (*num_spaces)++;
         }
     }
+    return toReturn; //Returning set of blank spaces
+}
+
+person_t* insert_person(map_t* map, char c, char* name, addr_t address){ //The idea is to insert all possible position into a set and extract one randomly
+    set_t* indexes;
+    int num_spaces = 0;
+    int final_index = 0;
+    indexes = get_freeSpace(map, &num_spaces);
     if(num_spaces == 0){
         return NULL;
     }
-    srand(time(NULL)); //Seeds the random number generator
     int random_number = rand() % (num_spaces); //Generate random number from 0 to num_spaces (possible values in set)
     char random_string[20];
     sprintf(random_string, "%d", random_number); //Turn random number to string
     int* temp = set_find(indexes, random_string); //Finds that string in the set
     final_index = *temp; //Sets the index associated with that value
-    person_t* person = person_new(c); //Create a new person with name 'c'
+    person_t* person = person_new(c, name, address, get_columns(map) *get_rows(map)); //Create a new person with name 'c' and name 'name'
     person_setPos(person, final_index); //Set position in person struct
     map->players[final_index] = person; //Set position in map
     set_delete(indexes, namedelete); //Deletes set 
@@ -237,4 +260,152 @@ void namedelete(void* item) //Deletes a name as helper function for hashtable
   if (item != NULL) {
     free(item);   
   }
+}
+
+void gold_initialize(map_t* map)
+{
+    int compare_gold = 0;
+    int random_piles = rand() % (GoldMaxNumPiles + 1 - GoldMinNumPiles) + GoldMinNumPiles;  //Defining the number of random piles
+    int gold_remaining = GoldTotal - random_piles; // each pile must have at least one gold
+    int space_count = 0;
+    set_t* indices = get_freeSpace(map, &space_count); // get the free spaces
+    while(random_piles >= space_count){
+        random_piles = rand() % (GoldMaxNumPiles + 1 - GoldMinNumPiles) + GoldMinNumPiles; 
+    }
+    for(int pile = 0; pile<random_piles; pile++){ //Go through each pile
+        
+        int random_gold = rand() % gold_remaining; 
+        if(pile == random_piles - 1){ //Last pile add remaining gold
+            random_gold = gold_remaining;
+        }
+        
+        int random_index = rand() % space_count; //Define a random index in the random piles
+        gold_remaining -= random_gold; //Subtract the random gold defined from total remaining
+        char random_number_string[20];
+        sprintf(random_number_string, "%d", random_index); //Turn into a string
+        int* position = set_find(indices, random_number_string); //Find that space given random number
+        spot_t * spot = map->grid[*position];
+        spot_add_gold(spot, random_gold + 1); //Adds gold and ensure that tehre is at eleast one
+        compare_gold += random_gold + 1;
+        spot_set_item(spot, '*'); //Sets spot to gold character
+    }
+    set_delete(indices, namedelete);
+}
+
+
+
+// clone the current map. To be called whenever inserting a new player
+map_t* clone_map(map_t* current_map) {
+    if (current_map == NULL) {
+        return NULL;
+    }
+    
+    map_t* new_map = malloc(sizeof(map_t));
+    if (new_map == NULL) {
+        fprintf(stderr, "Memory allocation failure");
+        exit(1);
+    }
+
+    new_map->rows = current_map->rows; //Copying over rows 
+    new_map->columns = current_map->columns; //Copying over columns
+
+    new_map->grid = malloc(current_map->rows * current_map->columns * sizeof(spot_t*)); //Allocating memory for grid
+    new_map->players = malloc(current_map->rows * current_map->columns * sizeof(person_t*)); //Allocating memory for players
+
+    if (new_map->grid == NULL || new_map->players == NULL) {
+        fprintf(stderr, "Memory allocation failure");
+        exit(1);
+    }
+
+    // Clone grid
+    for (int i = 0; i < current_map->rows * current_map->columns; i++) {
+        if (current_map->grid[i] != NULL) {
+            new_map->grid[i] = spot_clone(current_map->grid[i], i, 0); // Assuming spot_clone is a function that correctly clones a spot
+        } else {
+            exit(1);
+        }
+    }
+    // Clone players
+    for (int i = 0; i < current_map->rows * current_map->columns; i++) {
+        if (current_map->players[i] != NULL) {
+            new_map->players[i] = person_clone(current_map->players[i]); // Assuming person_clone is a function that correctly clones a person
+        } else {
+            new_map->players[i] = NULL;
+        }
+    }
+    return new_map;
+}
+
+person_t** get_players(map_t* map){
+    return map->players;
+}
+
+int get_rows(map_t * map){
+    return map->rows;
+}
+
+int get_columns(map_t* map){
+    return map->columns;
+}
+
+char* grid_to_string_spectator(map_t* map){
+    int total_size = (map->rows * (map->columns + 1)) + 1; // Including newlines and null terminator
+    char *to_return = (char *)malloc(total_size * sizeof(char));
+    if (!to_return) {
+        return NULL;
+    }
+    to_return[0] = '\0'; // Initialize to empty string
+
+    for(int index = 0; index < map->rows * map->columns; index++){
+        char to_append;
+        if(map->players[index] != NULL){
+            to_append = person_getLetter(map->players[index]);
+        }else{
+            to_append = spot_item(map->grid[index]);
+        }
+        if(index % map->columns -1 == 0){
+            strncat(to_return, "\n", 2);
+        }
+        strncat(to_return, &to_append, 1);
+    }
+    return to_return;
+}
+
+char* grid_to_string_player(map_t* map, char letter) {
+    int total_size = (map->rows * (map->columns + 1)) + 1; // Including newlines and null terminator
+    char *to_return = (char *)malloc(total_size * sizeof(char)); //Allocating memory for map string
+    if (!to_return) { //Validating not NULL
+        return NULL;
+    }
+    to_return[0] = '\0'; // Initialize to empty string
+    for(int index = 0; index < map->rows * map->columns; index++){ //Run through map
+        char to_append;
+        if(map->players[index] != NULL){
+            to_append = (letter == person_getLetter(map->players[index])) ? '@' : person_getLetter(map->players[index]); //Replace the person with @
+        }else{
+            to_append = spot_item(map->grid[index]); //Appending spot
+            if(spot_invisible_gold(map->grid[index])){ //Ensuring invisible gold remains invisible
+                to_append = '.';
+            }
+        }
+        if(index % map->columns -1 == 0){
+            strncat(to_return, "\n", 2);
+        }
+        if(!get_visibility(map->grid[index])){ //Getting visibility and applying it to map
+            to_append = ' ';
+        }
+        strncat(to_return, &to_append, 1);
+    }
+    return to_return;
+}
+
+void set_person(map_t* map, person_t* person){
+    if(person == NULL){
+        fprintf(stderr, "The person us null\n");
+    }
+    map->players[person_getPos(person)] = person_clone(person); //Cloning the person
+}
+
+spot_t** get_grid(map_t* map){
+    return map->grid;
 }

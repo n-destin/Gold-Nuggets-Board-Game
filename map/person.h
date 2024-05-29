@@ -12,21 +12,22 @@
 
 /**************** global types ****************/
 typedef struct person person_t;
+typedef struct sockaddr_in addr_t;
 
 /**************** functions ****************/
 
 /**************** person_new ****************/
 /*
-* Allocates memory for a spot. Sets name to 'c' and sets gold to 0.
+* Allocates memory for a person. Sets name to 'c' and sets gold to 0.
 * Caller is responsible for calling person_delete
 */
-person_t* person_new(char c);
+person_t* person_new(char c, char* name, addr_t address, int max_positions);
 
 /**************** person_addGold ****************/
 /*
-* Adds 1 gold to person's count
+* Adds specified amount of gold to person's count
 */
-void person_addGold(person_t* person);
+void person_addGold(person_t* person, int gold);
 
 /**************** person_getGold ****************/
 /*
@@ -34,15 +35,17 @@ void person_addGold(person_t* person);
 */
 int person_getGold(person_t* person);
 
+char person_getLetter(person_t* person);
+
 /**************** person_getName ****************/
 /*
-* Returns person's gold count
-*/
-char person_getName(person_t* person);
-
-/**************** person_getGold ****************/
-/*
 * Returns person's name
+*/
+char* person_getName(person_t* person);
+
+/**************** person_setPos ****************/
+/*
+* Set a persons position
 */
 void person_setPos(person_t* person, int new_pos);
 
@@ -51,6 +54,8 @@ void person_setPos(person_t* person, int new_pos);
 * Returns person's position
 */
 int person_getPos(person_t* person);
+
+addr_t person_getAddr(person_t* person);
 
 /**************** person_delete ****************/
 /*
@@ -65,4 +70,16 @@ void person_delete(person_t* person);
 void person_setName(person_t* person, char c);
 
 
+person_t* person_clone( person_t* original);
 
+/**************** get_visible ****************/
+/*
+ * Returns the array of what is visible/not visible for a given person
+ * Within the array, zero means it is visible and otherwise it should be visible to that player
+ */
+int* get_visible(person_t* person);
+
+/**************** update_visible_array ****************/
+ /* Updates what is visible and not visible to the player
+ */
+void update_visible_array(person_t* person, int index);

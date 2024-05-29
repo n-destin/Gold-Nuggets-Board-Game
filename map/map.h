@@ -12,9 +12,12 @@
 #include <stdbool.h>
 #include <string.h>
 #include "person.h"
+#include "spot.h"
 
 /**************** global types ****************/
 typedef struct map map_t;
+typedef struct sockaddr_in addr_t;
+
 
 /**************** functions ****************/
 
@@ -26,6 +29,7 @@ typedef struct map map_t;
 */
 map_t* map_new(char* path);
 
+map_t* clone_map(map_t* current_map);
 
 /**************** map_validate ****************/
 /*
@@ -61,11 +65,13 @@ void map_delete(map_t* map);
 */
 void namedelete(void* item);
 
+person_t** get_players(map_t* map);
+
 /**************** insert_person ****************/
 /*
 * Inserts a newly created person with name 'c' into map at a random valid location
 */
-person_t* insert_person(map_t* map, char c);
+person_t* insert_person(map_t* map, char c, char* name, addr_t address);
 
 /**************** move_person ****************/
 /*
@@ -76,3 +82,35 @@ person_t* insert_person(map_t* map, char c);
 bool move_person(map_t* map, person_t* person, char direction);
 
 
+/**************** gold_initialize ****************/
+// Initializes the gold onto the map
+void gold_initialize(map_t* map);
+
+/**************** get_rows ****************/
+// Returns the number of rows on the map
+int get_rows(map_t * map);
+
+/**************** get_columns****************/
+// Return the number of columns on the map
+int get_columns(map_t* map);
+
+/**************** grid_to_string_player ****************/
+/* Converts the grid into a string for what the player sees
+ * Uses visible to keep track of what should/should not be displayed
+ *
+ */
+char* grid_to_string_player(map_t* map, char letter);
+
+/**************** grid_to_string_spectator ****************/
+/* Converts the grid into a string for what a spectator should see
+ * This is the entire map, since a spectator should be able to see everything
+ */
+char* grid_to_string_spectator(map_t* map);
+
+/**************** set_person ****************/
+// Creates a clone of the person which is stored in our array of people
+void set_person(map_t* map, person_t* person);
+
+/**************** get_grid****************/
+// Returns the grid associated with a given map
+spot_t** get_grid(map_t* map);

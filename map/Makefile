@@ -6,8 +6,8 @@
 L = ../libcs50
 
 
-OBJS = map.o spot.o maptest.o person.o
-LLIBS = $L/libcs50-given.a
+OBJS = maptest.o map.o spot.o person.o visibility.o
+LLIBS = $L/libcs50-given.a ../support/support.a
 LIBS = -lm
 
 
@@ -17,23 +17,27 @@ LIBS = -lm
 CFLAGS = -Wall -pedantic -std=c11 -ggdb -I$L
 CC = gcc
 MAKE = make
+LIB = map.a
+
 # for memory-leak tests
 VALGRIND = valgrind --leak-check=full --show-leak-kinds=all
+
+$(LIB): $(OBJS)
+	ar cr $(LIB) $(OBJS)
 
 maptest: $(OBJS) $(LLIBS)
 	$(CC) $(CFLAGS) $(OBJS) $(LLIBS) $(LIBS) -o $@
 
 map.o: map.h spot.h person.h
 spot.o: spot.h
-maptest.o:
 person.o: person.h
+visibility.o: visibility.h
 
 test: maptest
 	./maptest ../maps/small.txt
 
 valgrind: maptest
 	$(VALGRIND) ./maptest ../maps/small.txt
-
 
 .PHONY: test valgrind clean
 
@@ -42,7 +46,3 @@ clean:
 	rm -f *~ *.o
 	rm -f hashtest
 	rm -f core
-
-
-
-
