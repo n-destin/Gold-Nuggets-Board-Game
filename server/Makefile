@@ -15,7 +15,10 @@ server: $(OBJS) $(LLIBS)
 server.o: server.h
 
 test: server
-		./server ../maps/small.txt
+	./server ../maps/big.txt
+
+deadend: server
+	./server ../maps/deadend.txt		
 
 valgrind: server
 		$(VALGRIND) ./server ../maps/small.txt
