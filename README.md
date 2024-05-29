@@ -49,3 +49,4 @@ Run `./client hostname port` to connect as a spectator
 ## Notes
 
 Valgrind runs clean on server and map, but client has curses errors which are accpetable and can't be fixed. 
+On the smaller maps, if there is not enough space for a player to join, the person will not be allowed to join and the server will quit. 
