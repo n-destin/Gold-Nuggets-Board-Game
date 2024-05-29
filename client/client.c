@@ -294,7 +294,7 @@ handleMessage(void* arg, const addr_t from, const char* message)
 
   // Information for CURSES
   else if (strncmp(message, "DISPLAY", 7) == 0){
-    
+    clear();
     // HEADERS
     if(spectator){
       mvprintw(0, 1, "Spectator: %d nuggets unclaimed", r); 
