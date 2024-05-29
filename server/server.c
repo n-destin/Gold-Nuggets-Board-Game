@@ -206,6 +206,9 @@ bool handle_message(void* arg, const addr_t from, const char* message) {
         if (game->num_spectators != 0) {
             message_send(game->spectator_address, "QUIT You have been replaced by a new spectator.");
         }
+        char gridMessage[100]; 
+        sprintf(gridMessage, "GRID %d %d", get_rows(game->map), get_columns(game->map)); // creates the grid message
+        message_send(from, gridMessage);
         game->spectator_address = from;
         game->num_spectators = 1;
     } else if (strncmp(message, "KEY ", 4) == 0) { //handles key messages. (movements and quitting)
